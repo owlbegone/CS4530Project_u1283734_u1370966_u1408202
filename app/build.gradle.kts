@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.homework2"
+    namespace = "com.example.drawingapplication"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.homework2"
+        applicationId = "com.example.drawingapplication"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

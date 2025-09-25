@@ -28,10 +28,10 @@ fun SplashScreen(navController: NavHostController) {
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally){
-        Text("derp")
+        Text("this is the splash")
         Spacer(Modifier.height(20.dp))
-        Button(onClick = {navController.navigate("home")}) {
-            Text("Back to Home Screen")
+        Button(onClick = {navController.navigate("main")}) {
+            Text("to main")
         }
     }
 }

@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DrawingApplicationTheme {
                 val myNavControll = rememberNavController()
-                AppNavHost(myNavControll, "main")
+                AppNavHost(myNavControll, "splash")
             }
         }
     }
