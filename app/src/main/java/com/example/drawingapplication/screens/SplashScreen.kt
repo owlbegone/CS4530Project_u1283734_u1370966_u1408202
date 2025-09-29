@@ -21,7 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-
+import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
@@ -30,8 +31,12 @@ fun SplashScreen(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally){
         Text("this is the splash")
         Spacer(Modifier.height(20.dp))
-        Button(onClick = {navController.navigate("main")}) {
-            Text("to main")
+
+        LaunchedEffect(Unit) {
+            delay(3000) // wait 3 seconds
+            navController.navigate("main") {
+                popUpTo("splash") { inclusive = true } // remove splash from backstack
+            }
         }
     }
 }
