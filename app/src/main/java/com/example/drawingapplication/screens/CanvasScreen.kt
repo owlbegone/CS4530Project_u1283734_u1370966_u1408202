@@ -26,13 +26,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.collections.plus
+import com.example.drawingapplication.Model.Stroke
 
 class MyViewModel : ViewModel() {
-    private val strokesMutable = MutableStateFlow(listOf<List<Offset>>())
-    val strokesReadOnly: MutableStateFlow<List<List<Offset>>> = strokesMutable
-
-    //We will need to have a map that connects the strokes to their color here to stop it from recoloring
-    //all strokes with the current color. This is TBD
+    private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
+    val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
 
     private val currentStrokeMutable = MutableStateFlow(listOf<Offset>())
     val currentStrokeReadOnly: MutableStateFlow<List<Offset>> = currentStrokeMutable
@@ -42,7 +40,8 @@ class MyViewModel : ViewModel() {
     val currentColorReadOnly: MutableStateFlow<Color> = currentColorMutable
 
     fun addStroke(stroke: List<Offset>) {
-        strokesMutable.value = strokesMutable.value + listOf(stroke)
+        val thisStroke = Stroke(stroke, currentColorMutable.value)
+        strokesMutable.value.add(thisStroke)
         currentStrokeMutable.value = emptyList() // reset current stroke
     }
 
@@ -82,11 +81,11 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
     ) {
         // Draw finished strokes
         for (stroke in observableStrokes) {
-            for (i in 0 until stroke.size - 1) {
+            for (i in 0 until stroke.lines.size - 1) {
                 drawLine(
-                    color = observableColor,
-                    start = stroke[i],
-                    end = stroke[i + 1],
+                    color = stroke.color,
+                    start = stroke.lines[i],
+                    end = stroke.lines[i + 1],
                     strokeWidth = 4f
                 )
             }
