@@ -10,15 +10,28 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -29,28 +42,55 @@ import kotlin.collections.plus
 import com.example.drawingapplication.Model.Stroke
 
 class MyViewModel : ViewModel() {
+    // Variables for the lists containing all the strokes on the canvas
     private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
     val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
 
+    // Variables for the current stroke (if one is being drawn)
     private val currentStrokeMutable = MutableStateFlow(listOf<Offset>())
     val currentStrokeReadOnly: MutableStateFlow<List<Offset>> = currentStrokeMutable
 
+    // Variables for the current color being used
     private val currentColorMutable = MutableStateFlow(Color.Black)
 
     val currentColorReadOnly: MutableStateFlow<Color> = currentColorMutable
 
+    // Variables for the current size being used
+    private val currentSizeMutable = MutableStateFlow(4)
+
+    val currentSizeReadOnly: MutableStateFlow<Int> = currentSizeMutable
+
+    // Variables for the current pen shape being used
+    private val currentShapeMutable = MutableStateFlow("Square")
+
+    val currentShapeReadOnly: MutableStateFlow<String> = currentShapeMutable
+
+    // Adds a stroke to the list once the user lifts their finger
     fun addStroke(stroke: List<Offset>) {
-        val thisStroke = Stroke(stroke, currentColorMutable.value)
+        val thisStroke = Stroke(stroke, currentColorMutable.value,
+            currentSizeMutable.value, currentShapeMutable.value)
         strokesMutable.value.add(thisStroke)
         currentStrokeMutable.value = emptyList() // reset current stroke
     }
 
+    // Adds a point to a list of the current stroke
     fun addPoint(point: Offset) {
         currentStrokeMutable.value = currentStrokeMutable.value + point
     }
 
+    // Changes the color
     fun changeColor(color: Color) {
         currentColorMutable.value = color
+    }
+
+    // Changes the size
+    fun changeSize(size: Float) {
+        currentSizeMutable.value = size.toInt()
+    }
+
+    // Changes the shape
+    fun changeShape(type: String) {
+        currentShapeMutable.value = type
     }
 }
 @Composable
@@ -58,6 +98,10 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
     val observableStrokes by myVM.strokesReadOnly.collectAsState()
     val observableCurrentStroke by myVM.currentStrokeReadOnly.collectAsState()
     val observableColor by myVM.currentColorReadOnly.collectAsState()
+    val strokeSize by myVM.currentSizeReadOnly.collectAsState()
+    val strokeShape by myVM.currentShapeReadOnly.collectAsState()
+    var sliderPosition by remember {mutableFloatStateOf(0f)}
+    var expanded by remember {mutableStateOf(false)}
 
     Canvas(
         modifier = Modifier
@@ -82,23 +126,51 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
         // Draw finished strokes
         for (stroke in observableStrokes) {
             for (i in 0 until stroke.lines.size - 1) {
-                drawLine(
-                    color = stroke.color,
-                    start = stroke.lines[i],
-                    end = stroke.lines[i + 1],
-                    strokeWidth = 4f
-                )
+                // currently there's only square and round; the else is when the type is round.
+                // if we add more shapes this should be changed.
+                if(stroke.type == "Square")
+                {
+                    drawLine(
+                        color = stroke.color,
+                        start = stroke.lines[i],
+                        end = stroke.lines[i + 1],
+                        strokeWidth = stroke.size.dp.toPx()
+                    )
+                }
+                else
+                {
+                    drawLine(
+                        color = stroke.color,
+                        start = stroke.lines[i],
+                        end = stroke.lines[i + 1],
+                        cap = StrokeCap.Round,
+                        strokeWidth = stroke.size.dp.toPx()
+                    )
+                }
             }
         }
 
         // Draw stroke in progress
         for (i in 0 until observableCurrentStroke.size - 1) {
-            drawLine(
-                color = observableColor,
-                start = observableCurrentStroke[i],
-                end = observableCurrentStroke[i + 1],
-                strokeWidth = 4f
-            )
+            if(strokeShape == "Square")
+            {
+                drawLine(
+                    color = observableColor,
+                    start = observableCurrentStroke[i],
+                    end = observableCurrentStroke[i + 1],
+                    strokeWidth = strokeSize.dp.toPx()
+                )
+            }
+            else
+            {
+                drawLine(
+                    color = observableColor,
+                    start = observableCurrentStroke[i],
+                    end = observableCurrentStroke[i + 1],
+                    cap = StrokeCap.Round,
+                    strokeWidth = strokeSize.dp.toPx()
+                )
+            }
         }
     }
 
@@ -106,6 +178,7 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally){
         Row{
+            // Buttons for changing pen color
             Button(onClick = { myVM.changeColor(Color.Red) }) {
                 Text("Red")
             }
@@ -114,6 +187,35 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
             }
             Button(onClick = { myVM.changeColor(Color.Green) }) {
                 Text("Green")
+            }
+        }
+        Row{
+            // This displays the size slider
+            Text(text = "Brush size: " + sliderPosition.toInt().toString())
+            Slider(
+                value = sliderPosition,
+                onValueChange = {sliderPosition = it
+                                myVM.changeSize(it)},
+                steps = 30,
+                valueRange = 0f..31f
+            )
+        }
+        Row (horizontalArrangement = Arrangement.End){
+            // This displays the menu for the brush shape
+            Text(text = "Brush shape: " + sliderPosition.toInt().toString())
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Shape Options")
+            }
+            DropdownMenu(expanded = expanded,
+                onDismissRequest = {expanded = false}) {
+                DropdownMenuItem(
+                    text = {Text("Square")},
+                    onClick = {myVM.changeShape("Square")}
+                )
+                DropdownMenuItem(
+                    text = {Text("Round")},
+                    onClick = {myVM.changeShape("Round")}
+                )
             }
         }
 
