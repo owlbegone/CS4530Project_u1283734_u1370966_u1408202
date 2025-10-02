@@ -1,5 +1,6 @@
 package com.example.drawingapplication.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,14 +23,22 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.delay
+import com.example.drawingapplication.R
+
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally){
-        Text("this is the splash")
+        Image(
+            painter = painterResource(id = R.drawable.cooper),
+            contentDescription = null
+        )
+        Text("Drawing Application")
+
         Spacer(Modifier.height(20.dp))
 
         LaunchedEffect(Unit) {
