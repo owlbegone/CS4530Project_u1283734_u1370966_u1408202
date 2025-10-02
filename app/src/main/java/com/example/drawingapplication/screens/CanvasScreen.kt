@@ -3,6 +3,7 @@ package com.example.drawingapplication.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,10 +16,12 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,7 +36,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -93,6 +98,7 @@ class MyViewModel : ViewModel() {
         currentShapeMutable.value = type
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel()) {
     val observableStrokes by myVM.strokesReadOnly.collectAsState()
@@ -102,6 +108,7 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
     var sliderPosition by remember {mutableFloatStateOf(0f)}
     var expanded by remember {mutableStateOf(false)}
+    val interactionSource = remember {MutableInteractionSource()}
 
     Canvas(
         modifier = Modifier
@@ -174,9 +181,11 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
         }
     }
 
-    Column (modifier = Modifier.fillMaxSize().padding(50.dp),
+    Column (modifier = Modifier
+        .fillMaxSize()
+        .padding(50.dp),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally){
+        horizontalAlignment = Alignment.Start){
         Row{
             // Buttons for changing pen color
             Button(onClick = { myVM.changeColor(Color.Red) }) {
@@ -189,27 +198,36 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
                 Text("Green")
             }
         }
-        Row{
+        Row(verticalAlignment = Alignment.CenterVertically){
             // This displays the size slider
-            Text(text = "Brush size: " + sliderPosition.toInt().toString())
+            Text(text = "Brush size: " + sliderPosition.toInt().toString(), fontSize = 13.sp,
+                modifier = Modifier
+                    .padding(end = 20.dp))
             Slider(
                 value = sliderPosition,
                 onValueChange = {sliderPosition = it
                                 myVM.changeSize(it)},
                 steps = 30,
-                valueRange = 0f..31f
+                valueRange = 0f..31f,
+                thumb = {
+                    SliderDefaults.Thumb(
+                        interactionSource = interactionSource,
+                        thumbSize = DpSize(20.dp, 20.dp)
+                    )
+                }
             )
         }
-        Row (horizontalArrangement = Arrangement.End){
+        Row (verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start){
             // This displays the menu for the brush shape
-            Text(text = "Brush shape: " + sliderPosition.toInt().toString())
+            Text(text = "Brush shape: $strokeShape", fontSize = 13.sp)
             IconButton(onClick = { expanded = !expanded }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Shape Options")
             }
             DropdownMenu(expanded = expanded,
                 onDismissRequest = {expanded = false}) {
                 DropdownMenuItem(
-                    text = {Text("Square")},
+                    text = { Text("Square")},
                     onClick = {myVM.changeShape("Square")}
                 )
                 DropdownMenuItem(
