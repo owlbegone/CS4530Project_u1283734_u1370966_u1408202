@@ -237,5 +237,14 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
             }
         }
 
+        Row (verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start){
+            // This displays the menu for the brush shape
+            Text(text = "Current Color: " + observableColor.red + " " +
+                                            observableColor.blue + " " +
+                                            observableColor.green , fontSize = 13.sp)
+
+
+        }
     }
 }
