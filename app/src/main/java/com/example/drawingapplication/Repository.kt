@@ -1,6 +1,5 @@
 package com.example.drawingapplication
 
-
 import com.example.drawingapplication.room.DrawingEntity
 import com.example.drawingapplication.room.DrawingDao
 import kotlinx.coroutines.CoroutineScope
@@ -10,9 +9,9 @@ import kotlinx.coroutines.launch
 
 class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
 
-    val allCourses: Flow<List<DrawingEntity?>> = dao.getAllCourses()
+    val allDrawings: Flow<List<DrawingEntity?>> = dao.getAllDrawings()
 
-    fun addCourse(department: String, courseNum: String, loc: String) {
+    fun addCourse() {
         scope.launch {
             delay(1000) // simulates network delay
             val drawingObj = DrawingEntity()
@@ -25,5 +24,19 @@ class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
             delay(1000) // simulates network delay
             dao.deleteDrawingById(id)
         }
+    }
+
+    fun updateDrawing(drawing: DrawingEntity) {
+        scope.launch {
+            delay(1000) // simulates network delay
+            dao.updateDrawing(drawing)
+        }
+    }
+
+    fun getDrawingById(id: Int): Flow<DrawingEntity?> {
+        scope.launch {
+            delay(1000) // simulates network delay
+            dao.getDrawingById(id)
+         }
     }
 }

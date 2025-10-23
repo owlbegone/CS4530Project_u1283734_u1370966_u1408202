@@ -6,7 +6,7 @@ import com.example.drawingapplication.room.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
-class CourseListApp: Application() {
+class DrawingApp: Application() {
     val scope =CoroutineScope(SupervisorJob())
     val db by lazy {
         Room.databaseBuilder(

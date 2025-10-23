@@ -1,5 +1,6 @@
 package com.example.drawingapplication.screens
 
+import android.app.Application
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -39,17 +40,30 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.drawingapplication.DrawingApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.collections.plus
 import com.example.drawingapplication.Model.Stroke
+import com.example.drawingapplication.room.DrawingEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class MyViewModel : ViewModel() {
+class MyViewModel(application: Application) : AndroidViewModel(application) {
     // Variables for the lists containing all the strokes on the canvas
-    private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
-    val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
+//    private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
+//    val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
+
+
+    val dao = (application as DrawingApp).repository
 
     // Variables for the current stroke (if one is being drawn)
     private val currentStrokeMutable = MutableStateFlow(listOf<Offset>())
@@ -70,14 +84,29 @@ class MyViewModel : ViewModel() {
 
     val currentShapeReadOnly: MutableStateFlow<String> = currentShapeMutable
 
-    // Adds a stroke to the list once the user lifts their finger
-    fun addStroke(stroke: List<Offset>) {
-        val thisStroke = Stroke(stroke, currentColorMutable.value,
-            currentSizeMutable.value, currentShapeMutable.value)
-        strokesMutable.value.add(thisStroke)
-        currentStrokeMutable.value = emptyList() // reset current stroke
+    //get the current drawing
+    fun getDrawingById(drawingId: Int): Flow<DrawingEntity?> {
+        return dao.getDrawingById(drawingId)
     }
 
+    // Adds a stroke to the list once the user lifts their finger
+    fun addStroke(drawingId: Int, newStroke: Stroke) {
+        viewModelScope.launch {
+            // collect the latest drawing value from the flow
+            val drawing = dao.getDrawingById(drawingId).firstOrNull()
+
+            if (drawing != null) {
+                val updatedStrokes = drawing.strokes.toMutableList().apply { add(newStroke) }
+                val updatedDrawing = drawing.copy(strokes = ArrayList(updatedStrokes))
+                dao.updateDrawing(updatedDrawing)
+            }
+        }
+    }
+
+    fun getStrokes(drawingId: Int): Flow<List<Stroke>> {
+        return dao.getDrawingById(drawingId)
+            .map { drawing -> drawing?.strokes ?: emptyList() }
+    }
     // Adds a point to a list of the current stroke
     fun addPoint(point: Offset) {
         currentStrokeMutable.value = currentStrokeMutable.value + point
@@ -100,15 +129,20 @@ class MyViewModel : ViewModel() {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel()) {
-    val observableStrokes by myVM.strokesReadOnly.collectAsState()
+fun CanvasScreen(navController: NavHostController, drawingId: Int) {
+    val myVM: MyViewModel = viewModel()
+
+    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
+
+    // observe current stroke, color, size, shape
     val observableCurrentStroke by myVM.currentStrokeReadOnly.collectAsState()
     val observableColor by myVM.currentColorReadOnly.collectAsState()
     val strokeSize by myVM.currentSizeReadOnly.collectAsState()
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
-    var sliderPosition by remember {mutableFloatStateOf(0f)}
-    var expanded by remember {mutableStateOf(false)}
-    val interactionSource = remember {MutableInteractionSource()}
+
+    var sliderPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var expanded by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Canvas(
         modifier = Modifier
@@ -124,14 +158,14 @@ fun CanvasScreen(navController: NavHostController, myVM: MyViewModel = viewModel
                         myVM.addPoint(change.position)
                     },
                     onDragEnd = {
-                        myVM.addStroke(observableCurrentStroke)
+                        myVM.addStroke(drawingId, Stroke(observableCurrentStroke, observableColor, strokeSize))
                     }
                 )
             }
 
     ) {
         // Draw finished strokes
-        for (stroke in observableStrokes) {
+        for (stroke in strokes) {
             for (i in 0 until stroke.lines.size - 1) {
                 // currently there's only square and round; the else is when the type is round.
                 // if we add more shapes this should be changed.
