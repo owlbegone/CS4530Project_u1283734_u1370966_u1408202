@@ -46,6 +46,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 //        val newDrawing = DrawingEntity(strokes = ArrayList())
 //        return dao.insertDrawing(newDrawing)
 //    }
+
+    fun createNewDrawing(): Int {
+        return dao.addDrawing()
+    }
 }
 
 @Composable
@@ -60,7 +64,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
 
 //        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
         Button(onClick = {
-            navController.navigate("canvas/1")
+            val id = myVM.createNewDrawing()
+            navController.navigate("canvas/${id}")
         }) {
             Text("New Drawing")
         }
@@ -75,7 +80,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                         modifier = Modifier
                             .size(100.dp) // slightly larger preview
                             .background(Color.White)
-                            .clickable { navController.navigate("canvas") }
+                            .clickable { navController.navigate("canvas/${drawing?.id}") }
                     ) {
                         for (stroke in drawing?.strokes!!) {
                             for (i in 0 until stroke.lines.size - 1) {

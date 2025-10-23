@@ -11,15 +11,16 @@ class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
 
     val allDrawings: Flow<List<DrawingEntity?>> = dao.getAllDrawings()
 
-    fun addCourse() {
+    fun addDrawing() : Int {
         scope.launch {
             delay(1000) // simulates network delay
             val drawingObj = DrawingEntity()
             dao.insertDrawing(drawingObj)
+            return drawingObj.id
         }
     }
 
-    fun delCourse(id: Int) {
+    fun delDrawing(id: Int) {
         scope.launch {
             delay(1000) // simulates network delay
             dao.deleteDrawingById(id)
