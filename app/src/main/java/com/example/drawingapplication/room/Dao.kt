@@ -21,8 +21,8 @@ interface DrawingDao {
 
     @Query("select * from Drawings order by id desc")
     fun getAllDrawings(): Flow<List<DrawingEntity>>
-    @Update
-    fun updateDrawing(drawing: DrawingEntity)
+    @Update ("UPDATE id from Drawings WHERE id = :drawingId")
+    fun updateDrawing(drawing: DrawingEntity, drawingId: Int)
 }
 
 

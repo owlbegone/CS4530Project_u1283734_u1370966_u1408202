@@ -90,6 +90,10 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         return dao.getDrawingById(drawingId)
     }
 
+    fun saveDrawing(drawing: DrawingEntity, id: Int) {
+        dao.updateDrawing(drawing)
+    }
+
     // Adds a stroke to the list once the user lifts their finger
     fun addStroke(drawingId: Int, newStroke: Stroke) {
 //        viewModelScope.launch {
@@ -226,6 +230,11 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
         .padding(50.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start){
+        Row{
+            Button(onClick = {saveDrawing(DrawingEntity(strokes = strokes), drawingId)}) {
+                Text("Save")
+            }
+        }
         Row{
             // Buttons for changing pen color
             Button(onClick = { myVM.changeColor(Color.Red) }) {
