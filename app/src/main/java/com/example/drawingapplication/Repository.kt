@@ -26,17 +26,18 @@ class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
         }
     }
 
-    fun updateDrawing(drawing: DrawingEntity) {
-        scope.launch {
-            delay(1000) // simulates network delay
-            dao.updateDrawing(drawing)
-        }
-    }
+//    fun updateDrawing(drawing: DrawingEntity) {
+//        scope.launch {
+//            delay(1000) // simulates network delay
+//            dao.updateDrawing(drawing)
+//        }
+//    }
 
     fun getDrawingById(id: Int): Flow<DrawingEntity?> {
-        scope.launch {
-            delay(1000) // simulates network delay
-            dao.getDrawingById(id)
-         }
+//        scope.launch {
+//            delay(1000) // simulates network delay
+//            val thisDrawing = dao.getDrawingById(id)
+//         }
+        return dao.getDrawingById(id)
     }
 }

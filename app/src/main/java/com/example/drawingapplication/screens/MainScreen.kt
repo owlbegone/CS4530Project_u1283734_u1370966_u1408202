@@ -37,20 +37,31 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlin.text.lines
 
-class MyViewModel(application: Application) : AndroidViewModel(application) {
+
+class MainViewModel(application: Application) : AndroidViewModel(application) {
     val dao = (application as DrawingApp).repository
     val drawingReadOnly: Flow<List<DrawingEntity?>> = dao.allDrawings
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())}
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+//    suspend fun createNewDrawing(): Long {
+//        val newDrawing = DrawingEntity(strokes = ArrayList())
+//        return dao.insertDrawing(newDrawing)
+//    }
+}
 
 @Composable
-fun MainScreen(navController: NavHostController, myVM: MyViewModel = viewModel()) {
+fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel()) {
     val drawingList by myVM.drawingReadOnly.collectAsState(emptyList())
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally){
         Text("this is the main screen")
         Spacer(Modifier.height(20.dp))
-        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
+        // this should create a new canvas, not navigate to an existing one
+
+//        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
+        Button(onClick = {
+            navController.navigate("canvas/1")
+        }) {
             Text("New Drawing")
         }
 

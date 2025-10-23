@@ -56,11 +56,12 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+//import com.example.drawingapplication.ViewModel.MyViewModel
 
-class MyViewModel(application: Application) : AndroidViewModel(application) {
+class CanvasViewModel(application: Application) : AndroidViewModel(application) {
     // Variables for the lists containing all the strokes on the canvas
-//    private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
-//    val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
+    private val strokesMutable = MutableStateFlow<ArrayList<Stroke>>(arrayListOf())
+    val strokesReadOnly: MutableStateFlow<ArrayList<Stroke>> = strokesMutable
 
 
     val dao = (application as DrawingApp).repository
@@ -91,16 +92,19 @@ class MyViewModel(application: Application) : AndroidViewModel(application) {
 
     // Adds a stroke to the list once the user lifts their finger
     fun addStroke(drawingId: Int, newStroke: Stroke) {
-        viewModelScope.launch {
-            // collect the latest drawing value from the flow
-            val drawing = dao.getDrawingById(drawingId).firstOrNull()
-
-            if (drawing != null) {
-                val updatedStrokes = drawing.strokes.toMutableList().apply { add(newStroke) }
-                val updatedDrawing = drawing.copy(strokes = ArrayList(updatedStrokes))
-                dao.updateDrawing(updatedDrawing)
-            }
-        }
+//        viewModelScope.launch {
+//            // collect the latest drawing value from the flow
+//            val drawing = dao.getDrawingById(drawingId).firstOrNull()
+//
+//            if (drawing != null) {
+//                val updatedStrokes = drawing.strokes.toMutableList().apply { add(newStroke) }
+//                val updatedDrawing = drawing.copy(strokes = ArrayList(updatedStrokes))
+//                dao.updateDrawing(updatedDrawing)
+//            }
+//
+//        }
+        strokesMutable.value += newStroke
+        currentStrokeMutable.value = ArrayList<Offset>()
     }
 
     fun getStrokes(drawingId: Int): Flow<List<Stroke>> {
@@ -127,12 +131,14 @@ class MyViewModel(application: Application) : AndroidViewModel(application) {
         currentShapeMutable.value = type
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CanvasScreen(navController: NavHostController, drawingId: Int) {
-    val myVM: MyViewModel = viewModel()
+    val myVM: CanvasViewModel = viewModel()
 
-    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
+//    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
+    val strokes by myVM.strokesReadOnly.collectAsState()
 
     // observe current stroke, color, size, shape
     val observableCurrentStroke by myVM.currentStrokeReadOnly.collectAsState()
