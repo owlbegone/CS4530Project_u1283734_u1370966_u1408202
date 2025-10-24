@@ -15,6 +15,7 @@ composeBom = "2025.09.00"
 navigationTesting = "2.9.5"
 room = "2.6.1"
 ksp = "2.0.21-1.0.27"
+uiUnit = "1.9.4"
 
 [libraries]
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.4" }
@@ -40,6 +41,7 @@ androidx-navigation-testing = { group = "androidx.navigation", name = "navigatio
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

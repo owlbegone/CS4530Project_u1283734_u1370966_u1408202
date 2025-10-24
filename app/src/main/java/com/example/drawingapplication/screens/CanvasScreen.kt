@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
@@ -40,7 +43,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.draw
@@ -61,14 +66,8 @@ import kotlin.collections.plus
 import com.example.drawingapplication.Model.Stroke
 import com.example.drawingapplication.room.DrawingEntity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import androidx.core.graphics.createBitmap
-
-//import com.example.drawingapplication.ViewModel.MyViewModel
 
 class CanvasViewModel(application: Application) : AndroidViewModel(application) {
     // Variables for the lists containing all the strokes on the canvas
@@ -97,6 +96,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     val currentShapeReadOnly: MutableStateFlow<String> = currentShapeMutable
 
+    // Variables for the current bitmap (stores all of the existing information about Canvas)
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 
@@ -111,18 +111,6 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     // Adds a stroke to the list once the user lifts their finger
     fun addStroke(drawingId: Int, newStroke: Stroke) {
-//        viewModelScope.launch {
-//            // collect the latest drawing value from the flow
-//            val drawing = dao.getDrawingById(drawingId).firstOrNull()
-//
-//            if (drawing != null) {
-//                val updatedStrokes = drawing.strokes.toMutableList().apply { add(newStroke) }
-//                val updatedDrawing = drawing.copy(strokes = ArrayList(updatedStrokes))
-//                dao.updateDrawing(updatedDrawing)
-//            }
-//
-//        }
-//        createBitmapFromPicture(picture)
         strokesMutable.value += newStroke
         currentStrokeMutable.value = ArrayList<Offset>()
     }
@@ -151,11 +139,13 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         currentShapeMutable.value = type
     }
 
+    // Updates the bitmap when a new line has been created
     fun updateBitmap(thisBitmap: Bitmap)
     {
         bitmapMutable.value = thisBitmap
     }
 
+    // Creates a new Bitmap based on a given Picture
     fun createBitmapFromPicture(picture: Picture): Bitmap {
         val bitmap = createBitmap(picture.width, picture.height)
         val tempCanvas = android.graphics.Canvas(bitmap)
@@ -171,7 +161,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
     val myVM: CanvasViewModel = viewModel()
 
 //    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
-    val strokes by myVM.strokesReadOnly.collectAsState()
+//    val strokes by myVM.strokesReadOnly.collectAsState()
 
     // observe current stroke, color, size, shape
     val observableCurrentStroke by myVM.currentStrokeReadOnly.collectAsState()
@@ -185,7 +175,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
     val interactionSource = remember { MutableInteractionSource() }
 
     val picture = remember { Picture() }
-    // This Image is purely for testing so we can see the bitmap itself changing
+    // NOTE: This Image is purely for testing so we can see the bitmap itself changing.
+    // Comment out this Image() to remove the copy of the canvas in the top left.
     Image(bitmap = newestBitmap.asImageBitmap(),
         contentDescription = "")
     Column(modifier = Modifier
@@ -270,7 +261,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
                     val height = this.size.height.toInt()
                     onDrawWithContent {
                         val pictureCanvas =
-                            androidx.compose.ui.graphics.Canvas(
+                            Canvas(
                                 picture.beginRecording(
                                     width,
                                     height
@@ -287,6 +278,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
         ) {
             Canvas(
                 modifier = Modifier
+                    .border(width = 3.dp, color = Black, shape = CutCornerShape(5.dp))
                     .fillMaxSize()
                     .background(Color.White)
                     .pointerInput(Unit) {
@@ -306,33 +298,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
                     }
 
             ) {
+                // Draws the existing bitmap (the previous strokes)
                 this.drawImage(newestBitmap.asImageBitmap())
-                // Draw finished strokes
-//                for (stroke in strokes) {
-//                    for (i in 0 until stroke.lines.size - 1) {
-//                        // currently there's only square and round; the else is when the type is round.
-//                        // if we add more shapes this should be changed.
-//                        if(stroke.type == "Square")
-//                        {
-//                            drawLine(
-//                                color = stroke.color,
-//                                start = stroke.lines[i],
-//                                end = stroke.lines[i + 1],
-//                                strokeWidth = stroke.size.dp.toPx()
-//                            )
-//                        }
-//                        else
-//                        {
-//                            drawLine(
-//                                color = stroke.color,
-//                                start = stroke.lines[i],
-//                                end = stroke.lines[i + 1],
-//                                cap = StrokeCap.Round,
-//                                strokeWidth = stroke.size.dp.toPx()
-//                            )
-//                        }
-//                    }
-//                }
 
                 // Draw stroke in progress
                 for (i in 0 until observableCurrentStroke.size - 1) {
