@@ -1,7 +1,12 @@
 package com.example.drawingapplication.screens
 
 import android.app.Application
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Picture
+import android.net.Uri
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,9 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.draw
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -56,6 +66,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.core.graphics.createBitmap
+
 //import com.example.drawingapplication.ViewModel.MyViewModel
 
 class CanvasViewModel(application: Application) : AndroidViewModel(application) {
@@ -85,14 +97,17 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     val currentShapeReadOnly: MutableStateFlow<String> = currentShapeMutable
 
+    private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
+    val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
+
     //get the current drawing
     fun getDrawingById(drawingId: Int): Flow<DrawingEntity?> {
         return dao.getDrawingById(drawingId)
     }
 
-    fun saveDrawing(drawing: DrawingEntity, id: Int) {
-        dao.updateDrawing(drawing)
-    }
+//    fun saveDrawing(drawing: DrawingEntity, id: Int) {
+//        dao.updateDrawing(drawing)
+//    }
 
     // Adds a stroke to the list once the user lifts their finger
     fun addStroke(drawingId: Int, newStroke: Stroke) {
@@ -107,6 +122,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 //            }
 //
 //        }
+//        createBitmapFromPicture(picture)
         strokesMutable.value += newStroke
         currentStrokeMutable.value = ArrayList<Offset>()
     }
@@ -134,6 +150,19 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     fun changeShape(type: String) {
         currentShapeMutable.value = type
     }
+
+    fun updateBitmap(thisBitmap: Bitmap)
+    {
+        bitmapMutable.value = thisBitmap
+    }
+
+    fun createBitmapFromPicture(picture: Picture): Bitmap {
+        val bitmap = createBitmap(picture.width, picture.height)
+        val tempCanvas = android.graphics.Canvas(bitmap)
+        tempCanvas.drawPicture(picture)
+        return bitmap
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,151 +178,188 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
     val observableColor by myVM.currentColorReadOnly.collectAsState()
     val strokeSize by myVM.currentSizeReadOnly.collectAsState()
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
+    val newestBitmap by myVM.bitmapReadOnly.collectAsState()
 
     var sliderPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        myVM.addPoint(offset)
-                    },
-                    onDrag = { change, x ->
-                        change.consume()
-                        myVM.addPoint(change.position)
-                    },
-                    onDragEnd = {
-                        myVM.addStroke(drawingId, Stroke(observableCurrentStroke, observableColor, strokeSize))
+    val picture = remember { Picture() }
+    // This Image is purely for testing so we can see the bitmap itself changing
+    Image(bitmap = newestBitmap.asImageBitmap(),
+        contentDescription = "")
+    Column(modifier = Modifier
+        .padding(25.dp)
+        .fillMaxSize())
+    {
+        Column (modifier = Modifier,
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start){
+//        Row{
+//            Button(onClick = {saveDrawing(DrawingEntity(strokes = strokes), drawingId)}) {
+//                Text("Save")
+//            }
+//        }
+            Row{
+                // Buttons for changing pen color
+                Button(onClick = { myVM.changeColor(Color.Red) }) {
+                    Text("Red")
+                }
+                Button(onClick = { myVM.changeColor(Color.Blue) }) {
+                    Text("Blue")
+                }
+                Button(onClick = { myVM.changeColor(Color.Green) }) {
+                    Text("Green")
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically){
+                // This displays the size slider
+                Text(text = "Brush size: " + sliderPosition.toInt().toString(), fontSize = 13.sp,
+                    modifier = Modifier
+                        .padding(end = 20.dp))
+                Slider(
+                    value = sliderPosition,
+                    onValueChange = {sliderPosition = it
+                        myVM.changeSize(it)},
+                    steps = 30,
+                    valueRange = 0f..31f,
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = interactionSource,
+                            thumbSize = DpSize(20.dp, 20.dp)
+                        )
                     }
                 )
             }
-
-    ) {
-        // Draw finished strokes
-        for (stroke in strokes) {
-            for (i in 0 until stroke.lines.size - 1) {
-                // currently there's only square and round; the else is when the type is round.
-                // if we add more shapes this should be changed.
-                if(stroke.type == "Square")
-                {
-                    drawLine(
-                        color = stroke.color,
-                        start = stroke.lines[i],
-                        end = stroke.lines[i + 1],
-                        strokeWidth = stroke.size.dp.toPx()
-                    )
-                }
-                else
-                {
-                    drawLine(
-                        color = stroke.color,
-                        start = stroke.lines[i],
-                        end = stroke.lines[i + 1],
-                        cap = StrokeCap.Round,
-                        strokeWidth = stroke.size.dp.toPx()
-                    )
-                }
-            }
-        }
-
-        // Draw stroke in progress
-        for (i in 0 until observableCurrentStroke.size - 1) {
-            if(strokeShape == "Square")
-            {
-                drawLine(
-                    color = observableColor,
-                    start = observableCurrentStroke[i],
-                    end = observableCurrentStroke[i + 1],
-                    strokeWidth = strokeSize.dp.toPx()
-                )
-            }
-            else
-            {
-                drawLine(
-                    color = observableColor,
-                    start = observableCurrentStroke[i],
-                    end = observableCurrentStroke[i + 1],
-                    cap = StrokeCap.Round,
-                    strokeWidth = strokeSize.dp.toPx()
-                )
-            }
-        }
-    }
-
-    Column (modifier = Modifier
-        .fillMaxSize()
-        .padding(50.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start){
-        Row{
-            Button(onClick = {saveDrawing(DrawingEntity(strokes = strokes), drawingId)}) {
-                Text("Save")
-            }
-        }
-        Row{
-            // Buttons for changing pen color
-            Button(onClick = { myVM.changeColor(Color.Red) }) {
-                Text("Red")
-            }
-            Button(onClick = { myVM.changeColor(Color.Blue) }) {
-                Text("Blue")
-            }
-            Button(onClick = { myVM.changeColor(Color.Green) }) {
-                Text("Green")
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically){
-            // This displays the size slider
-            Text(text = "Brush size: " + sliderPosition.toInt().toString(), fontSize = 13.sp,
-                modifier = Modifier
-                    .padding(end = 20.dp))
-            Slider(
-                value = sliderPosition,
-                onValueChange = {sliderPosition = it
-                                myVM.changeSize(it)},
-                steps = 30,
-                valueRange = 0f..31f,
-                thumb = {
-                    SliderDefaults.Thumb(
-                        interactionSource = interactionSource,
-                        thumbSize = DpSize(20.dp, 20.dp)
-                    )
-                }
-            )
-        }
-        Row (verticalAlignment = Alignment.CenterVertically,
+            Row (verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start){
-            // This displays the menu for the brush shape
-            Text(text = "Brush shape: $strokeShape", fontSize = 13.sp)
-            IconButton(onClick = { expanded = !expanded }) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Shape Options")
+                // This displays the menu for the brush shape
+                Text(text = "Brush shape: $strokeShape", fontSize = 13.sp)
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Shape Options")
+                }
+                DropdownMenu(expanded = expanded,
+                    onDismissRequest = {expanded = false}) {
+                    DropdownMenuItem(
+                        text = { Text("Square")},
+                        onClick = {myVM.changeShape("Square")}
+                    )
+                    DropdownMenuItem(
+                        text = {Text("Round")},
+                        onClick = {myVM.changeShape("Round")}
+                    )
+                }
             }
-            DropdownMenu(expanded = expanded,
-                onDismissRequest = {expanded = false}) {
-                DropdownMenuItem(
-                    text = { Text("Square")},
-                    onClick = {myVM.changeShape("Square")}
-                )
-                DropdownMenuItem(
-                    text = {Text("Round")},
-                    onClick = {myVM.changeShape("Round")}
-                )
+
+            Row (verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start){
+                // This displays the menu for the brush shape
+                Text(text = "Current Color: " + observableColor.red + " " +
+                        observableColor.blue + " " +
+                        observableColor.green , fontSize = 13.sp)
+
+
             }
         }
+        Column(
+            modifier = Modifier
+                .drawWithCache {
+                    // Example that shows how to redirect rendering to an Android Picture and then
+                    // draw the picture into the original destination
+                    val width = this.size.width.toInt()
+                    val height = this.size.height.toInt()
+                    onDrawWithContent {
+                        val pictureCanvas =
+                            androidx.compose.ui.graphics.Canvas(
+                                picture.beginRecording(
+                                    width,
+                                    height
+                                )
+                            )
+                        draw(this, this.layoutDirection, pictureCanvas, this.size) {
+                            this@onDrawWithContent.drawContent()
+                        }
+                        picture.endRecording()
 
-        Row (verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start){
-            // This displays the menu for the brush shape
-            Text(text = "Current Color: " + observableColor.red + " " +
-                                            observableColor.blue + " " +
-                                            observableColor.green , fontSize = 13.sp)
+                        drawIntoCanvas { canvas -> canvas.nativeCanvas.drawPicture(picture) }
+                    }
+                }
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                myVM.addPoint(offset)
+                            },
+                            onDrag = { change, x ->
+                                change.consume()
+                                myVM.addPoint(change.position)
+                            },
+                            onDragEnd = {
+                                myVM.addStroke(drawingId, Stroke(observableCurrentStroke, observableColor, strokeSize, strokeShape))
+                                myVM.updateBitmap(myVM.createBitmapFromPicture(picture))
+                            }
+                        )
+                    }
 
+            ) {
+                this.drawImage(newestBitmap.asImageBitmap())
+                // Draw finished strokes
+//                for (stroke in strokes) {
+//                    for (i in 0 until stroke.lines.size - 1) {
+//                        // currently there's only square and round; the else is when the type is round.
+//                        // if we add more shapes this should be changed.
+//                        if(stroke.type == "Square")
+//                        {
+//                            drawLine(
+//                                color = stroke.color,
+//                                start = stroke.lines[i],
+//                                end = stroke.lines[i + 1],
+//                                strokeWidth = stroke.size.dp.toPx()
+//                            )
+//                        }
+//                        else
+//                        {
+//                            drawLine(
+//                                color = stroke.color,
+//                                start = stroke.lines[i],
+//                                end = stroke.lines[i + 1],
+//                                cap = StrokeCap.Round,
+//                                strokeWidth = stroke.size.dp.toPx()
+//                            )
+//                        }
+//                    }
+//                }
 
+                // Draw stroke in progress
+                for (i in 0 until observableCurrentStroke.size - 1) {
+                    if(strokeShape == "Square")
+                    {
+                        drawLine(
+                            color = observableColor,
+                            start = observableCurrentStroke[i],
+                            end = observableCurrentStroke[i + 1],
+                            strokeWidth = strokeSize.dp.toPx()
+                        )
+                    }
+                    else
+                    {
+                        drawLine(
+                            color = observableColor,
+                            start = observableCurrentStroke[i],
+                            end = observableCurrentStroke[i + 1],
+                            cap = StrokeCap.Round,
+                            strokeWidth = strokeSize.dp.toPx()
+                        )
+                    }
+                }
+            }
         }
     }
+
+
+
 }

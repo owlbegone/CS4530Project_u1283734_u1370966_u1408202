@@ -47,9 +47,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 //        return dao.insertDrawing(newDrawing)
 //    }
 
-    fun createNewDrawing(): Int {
-        return dao.addDrawing()
-    }
+//    fun createNewDrawing(): Int {
+//        return dao.addDrawing()
+//    }
 }
 
 @Composable
@@ -64,8 +64,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
 
 //        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
         Button(onClick = {
-            val id = myVM.createNewDrawing()
-            navController.navigate("canvas/${id}")
+//            val id = myVM.createNewDrawing()
+            navController.navigate("canvas/1")
         }) {
             Text("New Drawing")
         }

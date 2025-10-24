@@ -11,12 +11,12 @@ class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
 
     val allDrawings: Flow<List<DrawingEntity?>> = dao.getAllDrawings()
 
-    fun addDrawing() : Int {
+    fun addDrawing() {
         scope.launch {
             delay(1000) // simulates network delay
             val drawingObj = DrawingEntity()
             dao.insertDrawing(drawingObj)
-            return drawingObj.id
+//            return drawingObj.id
         }
     }
 
@@ -27,12 +27,12 @@ class Repository (val scope: CoroutineScope, private val dao: DrawingDao) {
         }
     }
 
-    fun updateDrawing(drawing: DrawingEntity) {
-        scope.launch {
-            delay(1000) // simulates network delay
-            dao.updateDrawing(drawing)
-        }
-    }
+//    fun updateDrawing(drawing: DrawingEntity) {
+//        scope.launch {
+//            delay(1000) // simulates network delay
+//            dao.updateDrawing(drawing)
+//        }
+//    }
 
     fun getDrawingById(id: Int): Flow<DrawingEntity?> {
 //        scope.launch {
