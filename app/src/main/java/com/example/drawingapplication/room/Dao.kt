@@ -11,20 +11,19 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface DrawingDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertDrawing(drawing: DrawingEntity): Long
+    suspend fun insertDrawing(drawing: DrawingEntity)
 
-    @Query("SELECT * FROM drawings WHERE id = :drawingId")
-    fun getDrawingById(drawingId: Int): Flow<DrawingEntity?>
+    @Query("SELECT drawingPath FROM drawings WHERE id = :drawingId")
+    suspend fun getDrawingById(drawingId: Int): String
 
     @Query("DELETE FROM Drawings WHERE id = :drawingId")
     suspend fun deleteDrawingById(drawingId: Int)
 
     @Query("select * from Drawings order by id desc")
     fun getAllDrawings(): Flow<List<DrawingEntity>>
-//    @Update ("UPDATE id from Drawings WHERE id = :drawingId")
-//    fun updateDrawing(drawing: DrawingEntity, drawingId: Int)
-    @Update
-    fun updateDrawing(drawing: DrawingEntity)
+
+    @Insert
+    suspend fun insertDrawingAndReturnId(drawing: DrawingEntity): Long
 }
 
 

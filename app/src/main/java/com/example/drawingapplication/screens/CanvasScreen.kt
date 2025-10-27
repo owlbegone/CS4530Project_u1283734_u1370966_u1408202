@@ -3,7 +3,9 @@ package com.example.drawingapplication.screens
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Picture
+import android.media.Image
 import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -33,6 +35,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,7 +49,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -68,6 +73,9 @@ import com.example.drawingapplication.room.DrawingEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import androidx.core.graphics.createBitmap
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 class CanvasViewModel(application: Application) : AndroidViewModel(application) {
     // Variables for the lists containing all the strokes on the canvas
@@ -100,14 +108,33 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 
-    //get the current drawing
-    fun getDrawingById(drawingId: Int): Flow<DrawingEntity?> {
-        return dao.getDrawingById(drawingId)
+    //get the current drawing to be drawn
+    suspend fun updateCanvas(drawingId: Int) {
+        viewModelScope.launch{
+            val drawingPath = dao.getDrawingById(drawingId)
+            val drawingFile = File(drawingPath)
+            val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
+            bitmapMutable.value = drawing
+        }
     }
 
-//    fun saveDrawing(drawing: DrawingEntity, id: Int) {
-//        dao.updateDrawing(drawing)
-//    }
+    fun saveDrawing(drawing: ImageBitmap, id: Int, context: Context) {
+        //save the image to app's local directory
+        //save the path to repository or update the path in the repository
+        val fileName = "drawing_${id}.png"
+        val file = File(context.filesDir, fileName)
+        val bitmap = drawing.asAndroidBitmap()
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+
+        val newDrawing = DrawingEntity(
+            drawingPath = file.absolutePath,
+            id = id
+        )
+
+        dao.insertDrawing(newDrawing)
+    }
 
     // Adds a stroke to the list once the user lifts their finger
     fun addStroke(drawingId: Int, newStroke: Stroke) {
@@ -115,10 +142,10 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         currentStrokeMutable.value = ArrayList<Offset>()
     }
 
-    fun getStrokes(drawingId: Int): Flow<List<Stroke>> {
-        return dao.getDrawingById(drawingId)
-            .map { drawing -> drawing?.strokes ?: emptyList() }
-    }
+//    fun getStrokes(drawingId: Int): Flow<List<Stroke>> {
+//        return dao.getDrawingById(drawingId)
+//            .map { drawing -> drawing?.strokes ?: emptyList() }
+//    }
     // Adds a point to a list of the current stroke
     fun addPoint(point: Offset) {
         currentStrokeMutable.value = currentStrokeMutable.value + point
@@ -157,7 +184,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CanvasScreen(navController: NavHostController, drawingId: Int) {
+fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: Boolean) {
     val myVM: CanvasViewModel = viewModel()
 
 //    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
@@ -177,8 +204,18 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
     val picture = remember { Picture() }
     // NOTE: This Image is purely for testing so we can see the bitmap itself changing.
     // Comment out this Image() to remove the copy of the canvas in the top left.
+
+    //if it's not a new drawing, update the canvas with the old bitmap from the directory
+    if(!newDrawing) {
+        LaunchedEffect(drawingId) {
+            myVM.updateCanvas(drawingId)
+        }
+    }
+
+
     Image(bitmap = newestBitmap.asImageBitmap(),
         contentDescription = "")
+
     Column(modifier = Modifier
         .padding(25.dp)
         .fillMaxSize())
@@ -186,11 +223,11 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int) {
         Column (modifier = Modifier,
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
-//        Row{
-//            Button(onClick = {saveDrawing(DrawingEntity(strokes = strokes), drawingId)}) {
-//                Text("Save")
-//            }
-//        }
+        Row{
+            Button(onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
+                Text("Save")
+            }
+        }
             Row{
                 // Buttons for changing pen color
                 Button(onClick = { myVM.changeColor(Color.Red) }) {

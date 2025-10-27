@@ -25,11 +25,15 @@ fun AppNavHost(navController: NavHostController, startDestination: String="splas
         }
 
         composable(
-            route = "canvas/{drawingId}",
-            arguments = listOf(navArgument("drawingId") { type = NavType.IntType })
+            route = "canvas/{drawingId}?newDrawing={newDrawing}",
+            arguments = listOf(
+                navArgument("drawingId") { type = NavType.IntType },
+                navArgument("newDrawing") { type = NavType.BoolType; defaultValue = true })
         ) { backStackEntry ->
             val drawingId = backStackEntry.arguments?.getInt("drawingId") ?: -1
-            CanvasScreen(navController, drawingId)
+            val newDrawing = backStackEntry.arguments?.getBoolean("newDrawing") ?: true
+
+            CanvasScreen(navController, drawingId, newDrawing)
         }
     }
 }

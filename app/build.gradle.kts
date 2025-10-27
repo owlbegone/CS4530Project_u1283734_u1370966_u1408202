@@ -55,6 +55,7 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.9.5")
     implementation(libs.androidx.ui.unit)
+    implementation(libs.androidx.runtime)
     androidTestImplementation("androidx.navigation:navigation-testing:2.8.6")
 
 
