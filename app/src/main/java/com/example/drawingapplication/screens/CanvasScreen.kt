@@ -152,8 +152,8 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // Changes the color
-    fun changeColor(color: Color) {
-        currentColorMutable.value = color
+    fun changeColor(red: Float, green: Float, blue: Float, alpha: Float) {
+        currentColorMutable.value = Color(red, green, blue, alpha)
     }
 
     // Changes the size
@@ -197,7 +197,13 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
     val newestBitmap by myVM.bitmapReadOnly.collectAsState()
 
-    var sliderPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var sizePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var redPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var greenPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var bluePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+    var alphaPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
+
+
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -213,8 +219,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     }
 
 
-    Image(bitmap = newestBitmap.asImageBitmap(),
-        contentDescription = "")
+//    Image(bitmap = newestBitmap.asImageBitmap(),
+//        contentDescription = "")
 
     Column(modifier = Modifier
         .padding(25.dp)
@@ -228,26 +234,118 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                 Text("Save")
             }
         }
-            Row{
-                // Buttons for changing pen color
-                Button(onClick = { myVM.changeColor(Color.Red) }) {
-                    Text("Red")
-                }
-                Button(onClick = { myVM.changeColor(Color.Blue) }) {
-                    Text("Blue")
-                }
-                Button(onClick = { myVM.changeColor(Color.Green) }) {
-                    Text("Green")
+            Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // This displays the size slider
+                    Text(
+                        text = "Red: " + redPosition.toInt().toString(), fontSize = 13.sp,
+                        modifier = Modifier
+                            .padding(end = 20.dp)
+                    )
+                    Slider(
+
+                        value = redPosition,
+                        onValueChange = {
+                            redPosition = it
+                            myVM.changeColor(
+                                it / 255,
+                                observableColor.green,
+                                observableColor.blue,
+                                observableColor.alpha
+                            )
+                        },
+                        steps = 254,
+                        valueRange = 0f..255f,
+                        thumb = {
+                            SliderDefaults.Thumb(
+                                interactionSource = interactionSource,
+                                thumbSize = DpSize(20.dp, 20.dp)
+                            )
+                        }
+                    )
                 }
             }
+
+            Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // This displays the size slider
+                    Text(
+                        text = "Green: " + greenPosition.toInt().toString(), fontSize = 13.sp,
+                        modifier = Modifier
+                            .padding(end = 20.dp)
+                    )
+                    Slider(
+                        value = greenPosition,
+                        onValueChange = {
+                            greenPosition = it
+                            myVM.changeColor(
+                                observableColor.red,
+                                it / 255,
+                                observableColor.blue,
+                                observableColor.alpha
+                            )
+                        },
+                        steps = 254,
+                        valueRange = 0f..255f,
+                        thumb = {
+                            SliderDefaults.Thumb(
+                                interactionSource = interactionSource,
+                                thumbSize = DpSize(20.dp, 20.dp)
+                            )
+                        }
+                    )
+                }
+            }
+
+            Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // This displays the size slider
+                    Text(
+                        text = "Blue: " + bluePosition.toInt().toString(), fontSize = 13.sp,
+                        modifier = Modifier
+                            .padding(end = 20.dp)
+                    )
+                    Slider(
+                        value = bluePosition,
+                        onValueChange = {
+                            bluePosition = it
+                            myVM.changeColor(
+                                observableColor.red,
+                                observableColor.green,
+                                it/255,
+                                observableColor.alpha
+                            )
+                        },
+                        steps = 254,
+                        valueRange = 0f..255f,
+                        thumb = {
+                            SliderDefaults.Thumb(
+                                interactionSource = interactionSource,
+                                thumbSize = DpSize(20.dp, 20.dp)
+                            )
+                        }
+                    )
+                }
+            }
+                // Buttons for changing pen color
+//                Button(onClick = { myVM.changeColor(Color.Red) }) {
+//                    Text("Red")
+//                }
+//                Button(onClick = { myVM.changeColor(Color.Blue) }) {
+//                    Text("Blue")
+//                }
+//                Button(onClick = { myVM.changeColor(Color.Green) }) {
+//                    Text("Green")
+//                }
+
             Row(verticalAlignment = Alignment.CenterVertically){
                 // This displays the size slider
-                Text(text = "Brush size: " + sliderPosition.toInt().toString(), fontSize = 13.sp,
+                Text(text = "Brush size: " + sizePosition.toInt().toString(), fontSize = 13.sp,
                     modifier = Modifier
                         .padding(end = 20.dp))
                 Slider(
-                    value = sliderPosition,
-                    onValueChange = {sliderPosition = it
+                    value = sizePosition,
+                    onValueChange = {sizePosition = it
                         myVM.changeSize(it)},
                     steps = 30,
                     valueRange = 0f..31f,
@@ -259,6 +357,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                     }
                 )
             }
+
             Row (verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start){
                 // This displays the menu for the brush shape
@@ -278,16 +377,16 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                     )
                 }
             }
-
-            Row (verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start){
-                // This displays the menu for the brush shape
-                Text(text = "Current Color: " + observableColor.red + " " +
-                        observableColor.blue + " " +
-                        observableColor.green , fontSize = 13.sp)
-
-
-            }
+//
+//            Row (verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.Start){
+//                // This displays the menu for the brush shape
+//                Text(text = "Current Color: " + observableColor.red + " " +
+//                        observableColor.blue + " " +
+//                        observableColor.green , fontSize = 13.sp)
+//
+//
+//            }
         }
         Column(
             modifier = Modifier
