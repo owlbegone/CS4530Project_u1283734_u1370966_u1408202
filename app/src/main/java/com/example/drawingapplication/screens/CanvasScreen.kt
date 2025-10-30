@@ -5,10 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Picture
-import android.media.Image
-import android.net.Uri
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -108,6 +105,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 
+
     //get the current drawing to be drawn
     suspend fun updateCanvas(drawingId: Int) {
         viewModelScope.launch{
@@ -180,6 +178,10 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         return bitmap
     }
 
+    fun exportBitmap() {
+
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -223,15 +225,24 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
 //        contentDescription = "")
 
     Column(modifier = Modifier
-        .padding(25.dp)
+        .padding(15.dp)
         .fillMaxSize())
     {
-        Column (modifier = Modifier,
+        Column (modifier = Modifier
+            .padding(top = 20.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
         Row{
             Button(onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
                 Text("Save")
+            }
+            Button(onClick = {myVM.exportBitmap()})
+            {
+                Text("Share")
+            }
+            Button(onClick = {navController.navigate("main")})
+            {
+                Text("Back to Main")
             }
         }
             Row {
@@ -327,16 +338,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                     )
                 }
             }
-                // Buttons for changing pen color
-//                Button(onClick = { myVM.changeColor(Color.Red) }) {
-//                    Text("Red")
-//                }
-//                Button(onClick = { myVM.changeColor(Color.Blue) }) {
-//                    Text("Blue")
-//                }
-//                Button(onClick = { myVM.changeColor(Color.Green) }) {
-//                    Text("Green")
-//                }
 
             Row(verticalAlignment = Alignment.CenterVertically){
                 // This displays the size slider
