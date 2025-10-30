@@ -167,14 +167,14 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                             bitmap = drawing.asImageBitmap(),
                             contentDescription = "Drawing ${drawingEntity?.id}",
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(200.dp)
                                 .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false") }
-                                .background(Color.LightGray)
+                                .background(Color.Transparent)
                         )
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(200.dp)
                                 .background(Color.Gray)
                                 .clickable { navController.navigate("canvas/${drawingEntity?.id}") }
                         )

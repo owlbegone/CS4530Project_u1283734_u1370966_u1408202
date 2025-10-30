@@ -2,9 +2,12 @@ package com.example.drawingapplication.screens
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Picture
+import android.net.Uri
+import android.widget.ImageView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -178,8 +181,26 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         return bitmap
     }
 
-    fun exportBitmap() {
-
+    fun exportBitmap(drawing: ImageBitmap, id: Int, context: Context) {
+        // First save the drawing in the db if the user hasn't already done so
+        saveDrawing(drawing, id, context)
+        val fileName = "drawing_${id}.png"
+        val file = File(context.filesDir, fileName)
+        val uri = Uri.fromFile(file)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+//        val sendIntent: Intent = Intent().apply {
+//            action = Intent.ACTION_SEND
+//            putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
+//        }
+//
+//        val shareIntent = Intent.createChooser(sendIntent, "Share Image")
+//        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//        return shareIntent
     }
 
 }
@@ -210,6 +231,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val interactionSource = remember { MutableInteractionSource() }
 
     val picture = remember { Picture() }
+
     // NOTE: This Image is purely for testing so we can see the bitmap itself changing.
     // Comment out this Image() to remove the copy of the canvas in the top left.
 
@@ -236,7 +258,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             Button(onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
                 Text("Save")
             }
-            Button(onClick = {myVM.exportBitmap()})
+            Button(onClick = {
+                myVM.exportBitmap(newestBitmap.asImageBitmap(), drawingId, navController.context)})
             {
                 Text("Share")
             }
