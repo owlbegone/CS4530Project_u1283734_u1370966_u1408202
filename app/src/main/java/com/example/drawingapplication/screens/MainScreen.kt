@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -167,14 +168,14 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                             bitmap = drawing.asImageBitmap(),
                             contentDescription = "Drawing ${drawingEntity?.id}",
                             modifier = Modifier
-                                .size(200.dp)
+                                .size(300.dp)
                                 .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false") }
                                 .background(Color.Transparent)
                         )
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(200.dp)
+                                .size(300.dp)
                                 .background(Color.Gray)
                                 .clickable { navController.navigate("canvas/${drawingEntity?.id}") }
                         )

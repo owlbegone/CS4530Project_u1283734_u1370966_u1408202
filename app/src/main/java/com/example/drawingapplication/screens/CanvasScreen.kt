@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Picture
 import android.net.Uri
+import android.provider.MediaStore
 import android.widget.ImageView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -74,6 +75,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import androidx.core.graphics.createBitmap
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
@@ -184,23 +186,17 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     fun exportBitmap(drawing: ImageBitmap, id: Int, context: Context) {
         // First save the drawing in the db if the user hasn't already done so
         saveDrawing(drawing, id, context)
-        val fileName = "drawing_${id}.png"
-        val file = File(context.filesDir, fileName)
-        val uri = Uri.fromFile(file)
+        val bytes = ByteArrayOutputStream()
+        val bitmap = drawing.asAndroidBitmap()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+        val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "Title", null)
+        val uri = Uri.parse(path.toString())
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "image/*"
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(shareIntent, "Share via"))
-//        val sendIntent: Intent = Intent().apply {
-//            action = Intent.ACTION_SEND
-//            putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
-//        }
-//
-//        val shareIntent = Intent.createChooser(sendIntent, "Share Image")
-//        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//        return shareIntent
     }
 
 }
