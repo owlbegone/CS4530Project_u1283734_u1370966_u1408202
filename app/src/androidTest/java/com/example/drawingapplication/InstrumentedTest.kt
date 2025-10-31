@@ -1,10 +1,17 @@
 package com.example.drawingapplication
 
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.drawingapplication.screens.CanvasScreen
 import com.example.drawingapplication.screens.MainScreen
@@ -31,19 +38,43 @@ class InstrumentedTest {
 
     @Before
     fun setupNavigator() {
-
+        navController = TestNavHostController(ApplicationProvider.getApplicationContext())
     }
 
 
     @Test
-    fun testMainScreen() {
+    fun testMainScreenNewDrawingButton() {
+        composeTestRule.setContent {
+            val testingNavController = rememberNavController()
+
+            MainScreen(testingNavController)
+        }
+        val button = composeTestRule.onNode(hasTestTag("NewButton"), useUnmergedTree = true)
+        button.assertIsDisplayed()
+    }
+
+    @Test
+    fun testMainScreenImportPhotoButton() {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
             MainScreen(testingNavController)
         }
 
-        composeTestRule.onNodeWithText("to canvas").isDisplayed();
+        val button = composeTestRule.onNode(hasTestTag("ImportButton"), useUnmergedTree = true)
+        button.assertIsDisplayed()
+    }
+
+    @Test
+    fun testMainScreenSavedColumn() {
+        composeTestRule.setContent {
+            val testingNavController = rememberNavController()
+
+            MainScreen(testingNavController)
+        }
+
+        val lazyColumn = composeTestRule.onNode(hasTestTag("SavedColumn"), useUnmergedTree = true)
+        lazyColumn.assertExists()
     }
 
     @Test
@@ -51,12 +82,12 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController)
+            CanvasScreen(testingNavController, 1, true)
         }
 
-        composeTestRule.onNodeWithText("Red").isDisplayed();
-        composeTestRule.onNodeWithText("Blue").isDisplayed();
-        composeTestRule.onNodeWithText("Green").isDisplayed();
+        composeTestRule.onNodeWithText("Red: 4").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Blue: 4").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Green: 4").assertIsDisplayed()
 
     }
 
@@ -65,10 +96,10 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController)
+            CanvasScreen(testingNavController, 1, true)
         }
 
-        composeTestRule.onNodeWithText("Brush Size").isDisplayed();
+        composeTestRule.onNodeWithText("Brush size: 4").assertIsDisplayed();
     }
 
     @Test
@@ -76,9 +107,9 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController)
+            CanvasScreen(testingNavController, 1, true)
         }
 
-        composeTestRule.onNodeWithText("Brush Shape").isDisplayed();
+        composeTestRule.onNodeWithText("Brush shape: Square").assertIsDisplayed();
     }
 }

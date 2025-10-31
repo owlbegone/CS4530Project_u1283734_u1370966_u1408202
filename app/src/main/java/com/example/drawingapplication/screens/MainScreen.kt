@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -140,7 +141,9 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         // this should create a new canvas, not navigate to an existing one
 
 //        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
-        Button(onClick = {
+        Button(
+            modifier = Modifier.testTag("NewButton"),
+            onClick = {
             scope.launch{
                 val newDrawing = myVM.newDrawing(navController.context)
                 navController.navigate("canvas/${newDrawing}?newDrawing=true")
@@ -148,7 +151,9 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         }) {
             Text("New Drawing")
         }
-        Button(onClick = {
+        Button(
+            modifier = Modifier.testTag("ImportButton"),
+            onClick = {
             mediaPicker.launch("image/*")
         })
         {
@@ -157,6 +162,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
 
         Row {
             LazyColumn(
+                modifier = Modifier
+                    .testTag("SavedColumn"),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -168,6 +175,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                             bitmap = drawing.asImageBitmap(),
                             contentDescription = "Drawing ${drawingEntity?.id}",
                             modifier = Modifier
+                                .testTag("SavedImage")
                                 .size(300.dp)
                                 .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false") }
                                 .background(Color.Transparent)

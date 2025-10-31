@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -251,15 +252,21 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
         Row{
-            Button(onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
+            Button(
+                modifier = Modifier.testTag("SaveButton"),
+                onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
                 Text("Save")
             }
-            Button(onClick = {
+            Button(
+                modifier = Modifier.testTag("ShareButton"),
+                onClick = {
                 myVM.exportBitmap(newestBitmap.asImageBitmap(), drawingId, navController.context)})
             {
                 Text("Share")
             }
-            Button(onClick = {navController.navigate("main")})
+            Button(
+                modifier = Modifier.testTag("BackButton"),
+                onClick = {navController.navigate("main")})
             {
                 Text("Back to Main")
             }
@@ -271,6 +278,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                         text = "Red: " + redPosition.toInt().toString(), fontSize = 13.sp,
                         modifier = Modifier
                             .padding(end = 20.dp)
+                            .testTag("RedTag")
                     )
                     Slider(
 
@@ -303,6 +311,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                         text = "Green: " + greenPosition.toInt().toString(), fontSize = 13.sp,
                         modifier = Modifier
                             .padding(end = 20.dp)
+                            .testTag("GreenTag")
                     )
                     Slider(
                         value = greenPosition,
@@ -334,6 +343,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                         text = "Blue: " + bluePosition.toInt().toString(), fontSize = 13.sp,
                         modifier = Modifier
                             .padding(end = 20.dp)
+                            .testTag("BlueTag")
                     )
                     Slider(
                         value = bluePosition,
@@ -362,7 +372,9 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                 // This displays the size slider
                 Text(text = "Brush size: " + sizePosition.toInt().toString(), fontSize = 13.sp,
                     modifier = Modifier
-                        .padding(end = 20.dp))
+                        .padding(end = 20.dp)
+                        .testTag("BrushTag")
+                )
                 Slider(
                     value = sizePosition,
                     onValueChange = {sizePosition = it
@@ -397,16 +409,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                     )
                 }
             }
-//
-//            Row (verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.Start){
-//                // This displays the menu for the brush shape
-//                Text(text = "Current Color: " + observableColor.red + " " +
-//                        observableColor.blue + " " +
-//                        observableColor.green , fontSize = 13.sp)
-//
-//
-//            }
         }
         Column(
             modifier = Modifier
@@ -434,6 +436,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
         ) {
             Canvas(
                 modifier = Modifier
+                    .testTag("CanvasTag")
                     .border(width = 3.dp, color = Black, shape = CutCornerShape(5.dp))
                     .fillMaxSize()
                     .background(Color.White)
