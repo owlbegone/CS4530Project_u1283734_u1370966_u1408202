@@ -75,6 +75,7 @@ import com.example.drawingapplication.room.DrawingEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import androidx.core.graphics.createBitmap
+import com.example.drawingapplication.BuildConfig
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -252,6 +253,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
         Row{
+            Text(text = BuildConfig.API_KEY, color = Color.Red)
             Button(
                 modifier = Modifier.testTag("SaveButton"),
                 onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
