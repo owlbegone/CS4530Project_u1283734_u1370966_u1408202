@@ -57,13 +57,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val drawingReadOnly: Flow<List<DrawingEntity?>> = dao.allDrawings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    suspend fun getDrawingById(drawingId: Int): ImageBitmap {
-        val drawingPath = dao.getDrawingById(drawingId)
-        val drawingFile = File(drawingPath)
-        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-        return drawing.asImageBitmap()
-    }
-
     suspend fun newDrawing(context: Context): Int {
         val tempDrawing = DrawingEntity(
             drawingPath = "",
@@ -81,24 +74,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         return newDrawing.id
     }
-
-    fun saveDrawing(drawing: ImageBitmap, id: Int, context: Context) {
-        //save the image to app's local directory
-        //save the path to repository or update the path in the repository
-        val fileName = "drawing_${id}.png"
-        val file = File(context.filesDir, fileName)
-        val bitmap = drawing.asAndroidBitmap()
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-        }
-
-        val newDrawing = DrawingEntity(
-            drawingPath = file.absolutePath,
-            id = id
-        )
-
-        dao.insertDrawing(newDrawing)
-    }
 }
 
 @Composable
@@ -106,56 +81,6 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
     val scope = rememberCoroutineScope()
     val drawingList by myVM.drawingReadOnly.collectAsState(emptyList())
 
-    var imageURI by remember { mutableStateOf<Uri?>(null)}
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent())
-    {
-        uri: Uri? ->
-        imageURI = uri
-        if (imageURI != null)
-        {
-            try{
-                val inputStream = uri?.let { navController.context.contentResolver.openInputStream(it) }
-                val drawing = BitmapFactory.decodeStream(inputStream)
-                val importedBitmap = drawing.asImageBitmap()
-                inputStream?.close()
-                scope.launch {
-                    val tempDrawingID = myVM.newDrawing(navController.context)
-                    val importedDrawing = myVM.saveDrawing(importedBitmap, tempDrawingID, navController.context)
-                    navController.navigate("canvas/${tempDrawingID}?newDrawing=false")
-                }
-            }
-            catch(e:Exception){
-                e.printStackTrace()
-            }
-        }
-//        val drawingFile = File(imageURI?.drawingPath)
-//        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-    }
-
-    val analysisPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent())
-    {
-            uri: Uri? ->
-        imageURI = uri
-        if (imageURI != null)
-        {
-            try{
-                val inputStream = uri?.let { navController.context.contentResolver.openInputStream(it) }
-                val drawing = BitmapFactory.decodeStream(inputStream)
-                val importedBitmap = drawing.asImageBitmap()
-                inputStream?.close()
-                scope.launch {
-                    val tempDrawingID = myVM.newDrawing(navController.context)
-                    val importedDrawing = myVM.saveDrawing(importedBitmap, tempDrawingID, navController.context)
-                    navController.navigate("analysis/${tempDrawingID}?newDrawing=false")
-                }
-            }
-            catch(e:Exception){
-                e.printStackTrace()
-            }
-        }
-//        val drawingFile = File(imageURI?.drawingPath)
-//        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-    }
     //val source = ImageDecoder.createSource(ContentResolver.SCHEME_ANDROID_RESOURCE, imageURI)
 
     Column (modifier = Modifier.fillMaxSize(),
@@ -171,25 +96,21 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
             onClick = {
             scope.launch{
                 val newDrawing = myVM.newDrawing(navController.context)
-                navController.navigate("canvas/${newDrawing}?newDrawing=true")
+                navController.navigate("canvas/${newDrawing}?newDrawing=true?startingImg=")
             }
         }) {
             Text("New Drawing")
         }
 
         Button(
-            modifier = Modifier.testTag("AnalysisScreen"),
-            onClick = { analysisPicker.launch("image/*")
-    })
-        {
-            Text("To Image Analysis")
-        }
-
-        Button(
             modifier = Modifier.testTag("ImportButton"),
             onClick = {
-            mediaPicker.launch("image/*")
-        })
+                scope.launch{
+                    val newDrawing = myVM.newDrawing(navController.context)
+                    navController.navigate("analysis/${newDrawing}")
+                }
+        }
+        )
         {
             Text("Import Photo")
         }

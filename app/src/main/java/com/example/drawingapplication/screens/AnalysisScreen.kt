@@ -63,103 +63,64 @@ import java.io.FileOutputStream
 
 class AnalysisViewModel(application: Application) : AndroidViewModel(application) {
     val dao = (application as DrawingApp).repository
-    val drawingReadOnly: Flow<List<DrawingEntity?>> = dao.allDrawings
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    suspend fun getDrawingById(drawingId: Int): ImageBitmap {
-        val drawingPath = dao.getDrawingById(drawingId)
-        val drawingFile = File(drawingPath)
-        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-        return drawing.asImageBitmap()
-    }
-    suspend fun newDrawing(context: Context): Int {
-        val tempDrawing = DrawingEntity(
-            drawingPath = "",
-        )
-        val newId = dao.insertAndReturnId(tempDrawing).toInt()
-
-        val fileName = "drawing_${newId}.png"
-        val file = File(context.filesDir, fileName)
-
-        val newDrawing = DrawingEntity(
-            drawingPath = file.absolutePath,
-            id = newId
-        )
-        dao.insertDrawing(newDrawing)
-
-        return newDrawing.id
-    }
-
-    fun saveDrawing(drawing: ImageBitmap, id: Int, context: Context) {
-        //save the image to app's local directory
-        //save the path to repository or update the path in the repository
-        val fileName = "drawing_${id}.png"
-        val file = File(context.filesDir, fileName)
-        val bitmap = drawing.asAndroidBitmap()
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    fun analyzeDrawing(bitmap: Bitmap) {
+        viewModelScope.launch {
+            dao.analyzeDrawing(bitmap)
         }
-
-        val newDrawing = DrawingEntity(
-            drawingPath = file.absolutePath,
-            id = id
-        )
-
-        dao.insertDrawing(newDrawing)
     }
-//
 }
 
 @Composable
-fun AnalysisScreen(navController: NavHostController, drawingId: Int, newDrawing: Boolean) {
-    val myVM: CanvasViewModel = viewModel()
-    val scope = rememberCoroutineScope()
-    val newestBitmap by myVM.bitmapReadOnly.collectAsState()
-
-
-
-
-//        val drawingFile = File(imageURI?.drawingPath)
-//        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-
-    Column(
-        modifier = Modifier
-            .padding(15.dp)
-            .fillMaxSize()
-    )
+fun AnalysisScreen(navController: NavHostController, drawingId: Int, myVM: AnalysisViewModel = viewModel()) {
+    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var imageURI by remember { mutableStateOf<Uri?>(null)}
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent())
     {
-        Column(
-            modifier = Modifier
-                .padding(top = 20.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row {
-//            Text(text = BuildConfig.API_KEY, color = Color.Red)
-
-                Button(
-                    modifier = Modifier.testTag("BackButton"),
-                    onClick = { navController.navigate("main") })
-                {
-                    Text("Back to Main")
-                }
-
-
+            uri: Uri? ->
+        imageURI = uri
+        if (imageURI != null)
+        {
+            try{
+                val inputStream = uri?.let { navController.context.contentResolver.openInputStream(it) }
+                val drawing = BitmapFactory.decodeStream(inputStream)
+                bitmap = drawing.asImageBitmap()
+                myVM.analyzeDrawing(drawing)
+                inputStream?.close()
             }
-
-            Canvas(
-                modifier = Modifier
-                    .testTag("CanvasTag")
-                    .border(width = 3.dp, color = Black, shape = CutCornerShape(5.dp))
-                    .fillMaxSize()
-                    .background(Color.White)
-
-
-            ) {
-                // Draws the existing bitmap (the previous strokes)
-                this.drawImage(newestBitmap.asImageBitmap())
+            catch(e:Exception){
+                e.printStackTrace()
             }
-
         }
     }
+
+    Column(modifier = Modifier.fillMaxSize().padding(top = 20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
+        bitmap?.let {
+            Image(
+                bitmap = it,
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        Button(
+            modifier = Modifier.testTag("ImportButton"),
+            onClick = {
+                mediaPicker.launch("image/*")
+            })
+        {
+            Text("Import Photo")
+        }
+        if (imageURI != null) {
+            Button(
+                modifier = Modifier.testTag("pickPhoto"),
+                onClick = {
+
+                    navController.navigate("canvas/${drawingId}?newDrawing=true?startingImg=${imageURI.toString()}")
+                }) {
+                Text("Start Drawing!")
+            }
+        }
+
+    }
+
 }

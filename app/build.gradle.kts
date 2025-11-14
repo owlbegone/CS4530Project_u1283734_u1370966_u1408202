@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
     //id("kotlin-kapt")
 }
 
@@ -73,6 +74,7 @@ dependencies {
     //implementation(libs.androidx.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.ui.graphics)
     ksp(libs.room.compiler)
     androidTestImplementation("androidx.navigation:navigation-testing:2.8.6")
 
@@ -112,4 +114,13 @@ dependencies {
 
     // For converting Bitmaps to ByteString
     implementation("com.google.protobuf:protobuf-java:4.33.1")
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio) // or use .android instead
+    implementation(libs.ktor.client.android) // or use .android instead
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
+
+
 }

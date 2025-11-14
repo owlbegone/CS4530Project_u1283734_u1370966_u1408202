@@ -1,6 +1,7 @@
 package com.example.drawingapplication.Navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
@@ -10,7 +11,6 @@ import com.example.drawingapplication.screens.AnalysisScreen
 import com.example.drawingapplication.screens.MainScreen
 import com.example.drawingapplication.screens.SplashScreen
 import com.example.drawingapplication.screens.CanvasScreen
-
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String="splash")
@@ -28,27 +28,27 @@ fun AppNavHost(navController: NavHostController, startDestination: String="splas
 
 
         composable(
-            route = "analysis/{drawingId}?newDrawing={newDrawing}",
-            arguments = listOf(
-                navArgument("drawingId") { type = NavType.IntType },
-                navArgument("newDrawing") { type = NavType.BoolType; defaultValue = true })
-        ) { backStackEntry ->
+            "analysis/{drawingId}",
+            arguments = listOf(navArgument("drawingId") { type = NavType.IntType })
+            ) {
+            backStackEntry ->
             val drawingId = backStackEntry.arguments?.getInt("drawingId") ?: -1
-            val newDrawing = backStackEntry.arguments?.getBoolean("newDrawing") ?: true
-
-            AnalysisScreen(navController, drawingId, newDrawing)
+            AnalysisScreen(navController, drawingId)
         }
 
         composable(
-            route = "canvas/{drawingId}?newDrawing={newDrawing}",
+            route = "canvas/{drawingId}?newDrawing={newDrawing}?startingImg={startingImg}",
             arguments = listOf(
                 navArgument("drawingId") { type = NavType.IntType },
-                navArgument("newDrawing") { type = NavType.BoolType; defaultValue = true })
+                navArgument("newDrawing") { type = NavType.BoolType; defaultValue = true },
+                navArgument("startingImg") { type = NavType.StringType; defaultValue = ""}
+            )
         ) { backStackEntry ->
             val drawingId = backStackEntry.arguments?.getInt("drawingId") ?: -1
             val newDrawing = backStackEntry.arguments?.getBoolean("newDrawing") ?: true
+            val startingImg = backStackEntry.arguments?.getString("startingImg") ?: ""
 
-            CanvasScreen(navController, drawingId, newDrawing)
+            CanvasScreen(navController, drawingId, newDrawing, startingImg)
         }
     }
 }

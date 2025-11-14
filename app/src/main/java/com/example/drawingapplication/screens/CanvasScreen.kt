@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
@@ -75,7 +76,8 @@ import com.example.drawingapplication.room.DrawingEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import androidx.core.graphics.createBitmap
-import com.example.drawingapplication.BuildConfig
+import androidx.core.net.toUri
+//import com.example.drawingapplication.BuildConfig
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -111,6 +113,9 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     // Variables for the current bitmap (stores all of the existing information about Canvas)
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
+
+    private val isNewDrawingMutable = MutableStateFlow(true)
+    val isNewDrawingReadOnly: MutableStateFlow<Boolean> = isNewDrawingMutable
 
 
     //get the current drawing to be drawn
@@ -177,6 +182,11 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         bitmapMutable.value = thisBitmap
     }
 
+    fun isNewDrawing(value: Boolean) {
+        isNewDrawingMutable.value = value
+    }
+
+
     // Creates a new Bitmap based on a given Picture
     fun createBitmapFromPicture(picture: Picture): Bitmap {
         val bitmap = createBitmap(picture.width, picture.height)
@@ -205,11 +215,8 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: Boolean) {
+fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: Boolean, startingImg: String) {
     val myVM: CanvasViewModel = viewModel()
-
-//    val strokes by myVM.getStrokes(drawingId).collectAsState(initial = emptyList())
-//    val strokes by myVM.strokesReadOnly.collectAsState()
 
     // observe current stroke, color, size, shape
     val observableCurrentStroke by myVM.currentStrokeReadOnly.collectAsState()
@@ -217,6 +224,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val strokeSize by myVM.currentSizeReadOnly.collectAsState()
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
     val newestBitmap by myVM.bitmapReadOnly.collectAsState()
+    val isNewDrawing by myVM.isNewDrawingReadOnly.collectAsState()
+
 
     var sizePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
     var redPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
@@ -229,9 +238,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val interactionSource = remember { MutableInteractionSource() }
 
     val picture = remember { Picture() }
-
-    // NOTE: This Image is purely for testing so we can see the bitmap itself changing.
-    // Comment out this Image() to remove the copy of the canvas in the top left.
+    myVM.isNewDrawing(newDrawing)
 
     //if it's not a new drawing, update the canvas with the old bitmap from the directory
     if(!newDrawing) {
@@ -239,10 +246,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             myVM.updateCanvas(drawingId)
         }
     }
-
-
-//    Image(bitmap = newestBitmap.asImageBitmap(),
-//        contentDescription = "")
 
     Column(modifier = Modifier
         .padding(15.dp)
@@ -253,7 +256,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
         Row{
-//            Text(text = BuildConfig.API_KEY, color = Color.Red)
             Button(
                 modifier = Modifier.testTag("SaveButton"),
                 onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
@@ -459,6 +461,21 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                     }
 
             ) {
+                //draw imported image, if it exists
+                if(startingImg != "") {
+                    val uri = startingImg.toUri()
+                    try {
+                        val inputStream =
+                            uri.let { navController.context.contentResolver.openInputStream(it) }
+                        val drawing = BitmapFactory.decodeStream(inputStream)
+                        val importedBitmap = drawing.asImageBitmap()
+                        inputStream?.close()
+                        this.drawImage(importedBitmap, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 // Draws the existing bitmap (the previous strokes)
                 this.drawImage(newestBitmap.asImageBitmap())
 
@@ -484,10 +501,13 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                         )
                     }
                 }
+
+//                if(isNewDrawing) {
+//                    myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)
+//                    myVM.isNewDrawing(false)
+//                }
             }
         }
+
     }
-
-
-
 }
