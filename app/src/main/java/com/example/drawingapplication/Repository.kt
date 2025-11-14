@@ -4,6 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.ui.graphics.asAndroidBitmap
+import com.example.drawingapplication.Model.BoundingPoly
+import com.example.drawingapplication.Model.ImageStats
+import com.example.drawingapplication.Model.VisionApiResponse
 import com.example.drawingapplication.room.DrawingEntity
 import com.example.drawingapplication.room.DrawingDao
 import io.ktor.client.HttpClient
@@ -20,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonArray
@@ -43,7 +47,7 @@ class Repository(
         return android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
     }
 
-    suspend fun analyzeDrawing(bitmap: Bitmap) {
+    suspend fun analyzeDrawing(bitmap: Bitmap): ImageStats {
         val url = "https://vision.googleapis.com/v1/images:annotate?key=${BuildConfig.API_KEY}"
         val base64Ver = bitmapToBase64(bitmap)
 
@@ -55,10 +59,6 @@ class Repository(
                             "content": "$base64Ver"
                             },
                             "features": [
-                            {
-                            "type": "LABEL_DETECTION",
-                            "maxResults": 5
-                            },
                             {
                              "type": "OBJECT_LOCALIZATION",
                              "maxResults": 10
@@ -74,6 +74,28 @@ class Repository(
         }.body<JsonObject>()
 
         Log.e("response", response.toString())
+        val obj = JsonToObject(response.toString())
+        val imageStatistics = createImageStats(obj)
+        Log.e("imageStatsCheck", imageStatistics.toString())
+
+        return imageStatistics
+    }
+
+    fun JsonToObject(jsonString: String): VisionApiResponse {
+        val json = Json { ignoreUnknownKeys = true }
+        return json.decodeFromString(jsonString)
+    }
+
+    fun createImageStats(response: VisionApiResponse): ImageStats {
+        val items = mutableMapOf<String, Pair<Double, BoundingPoly>>()
+        if (response.responses[0].localizedObjectAnnotations != null) {
+            for (item in response.responses[0].localizedObjectAnnotations!!) {
+                items.put(item.name, Pair(item.score, item.boundingPoly))
+            }
+
+        }
+        val imageStats = ImageStats(items)
+        return imageStats
     }
 
     fun addDrawing(drawingPath: String) {

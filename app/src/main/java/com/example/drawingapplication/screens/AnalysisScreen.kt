@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -66,7 +67,13 @@ class AnalysisViewModel(application: Application) : AndroidViewModel(application
 
     fun analyzeDrawing(bitmap: Bitmap) {
         viewModelScope.launch {
-            dao.analyzeDrawing(bitmap)
+            val imageStats = dao.analyzeDrawing(bitmap)
+            Log.e("In Analysis", imageStats.toString())
+            for (item in imageStats.labels) {
+                Log.e("Name Check", item.key)
+                Log.e("Score Check", item.value.first.toString())
+                Log.e("Location Check", item.value.second.toString())
+            }
         }
     }
 }
