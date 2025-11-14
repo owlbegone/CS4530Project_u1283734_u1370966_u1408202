@@ -131,6 +131,31 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
 //        val drawingFile = File(imageURI?.drawingPath)
 //        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
     }
+
+    val analysisPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent())
+    {
+            uri: Uri? ->
+        imageURI = uri
+        if (imageURI != null)
+        {
+            try{
+                val inputStream = uri?.let { navController.context.contentResolver.openInputStream(it) }
+                val drawing = BitmapFactory.decodeStream(inputStream)
+                val importedBitmap = drawing.asImageBitmap()
+                inputStream?.close()
+                scope.launch {
+                    val tempDrawingID = myVM.newDrawing(navController.context)
+                    val importedDrawing = myVM.saveDrawing(importedBitmap, tempDrawingID, navController.context)
+                    navController.navigate("analysis/${tempDrawingID}?newDrawing=false")
+                }
+            }
+            catch(e:Exception){
+                e.printStackTrace()
+            }
+        }
+//        val drawingFile = File(imageURI?.drawingPath)
+//        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
+    }
     //val source = ImageDecoder.createSource(ContentResolver.SCHEME_ANDROID_RESOURCE, imageURI)
 
     Column (modifier = Modifier.fillMaxSize(),
@@ -151,6 +176,15 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         }) {
             Text("New Drawing")
         }
+
+        Button(
+            modifier = Modifier.testTag("AnalysisScreen"),
+            onClick = { analysisPicker.launch("image/*")
+    })
+        {
+            Text("To Image Analysis")
+        }
+
         Button(
             modifier = Modifier.testTag("ImportButton"),
             onClick = {

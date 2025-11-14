@@ -253,7 +253,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start){
         Row{
-            Text(text = BuildConfig.API_KEY, color = Color.Red)
+//            Text(text = BuildConfig.API_KEY, color = Color.Red)
             Button(
                 modifier = Modifier.testTag("SaveButton"),
                 onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
