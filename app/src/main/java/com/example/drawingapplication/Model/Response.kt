@@ -1,11 +1,6 @@
 package com.example.drawingapplication.Model
 
-import android.util.Log
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
 
 // Gemini helped define all of the property names for the JSON objects
 
@@ -15,14 +10,15 @@ data class VisionApiResponse(val responses: List<Response>)
 @Serializable
 data class Response(
 //    val labelAnnotations: List<LabelAnnotation>? = null,
-    val localizedObjectAnnotations: List<LocalizedObjectAnnotation>? = null
+    val localizedObjectAnnotations: List<LocalizedObjectAnnotation>? = null,
+    val labelAnnotations: List<LabelAnnotation>? = null
 )
 
-//@Serializable
-//data class LabelAnnotation(
-//    val description: String,
-//    val score: Double
-//)
+@Serializable
+data class LabelAnnotation(
+    val description: String,
+    val score: Double
+)
 
 @Serializable
 data class LocalizedObjectAnnotation(
@@ -38,8 +34,8 @@ data class BoundingPoly(
 
 @Serializable
 data class NormalizedVertex(
-    val x: Double? = null,
-    val y: Double? = null
+    val x: Float = -1f,
+    val y: Float = -1f
 )
 
-data class ImageStats(val labels: Map<String, Pair<Double, BoundingPoly>>)
+data class ImageStats(val labelsNoLoc: List<LabelAnnotation> = emptyList(), val labels: List<LocalizedObjectAnnotation> = emptyList())

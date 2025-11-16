@@ -1,35 +1,24 @@
 package com.example.drawingapplication
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.compose.ui.graphics.asAndroidBitmap
-import com.example.drawingapplication.Model.BoundingPoly
 import com.example.drawingapplication.Model.ImageStats
+import com.example.drawingapplication.Model.LabelAnnotation
 import com.example.drawingapplication.Model.VisionApiResponse
 import com.example.drawingapplication.room.DrawingEntity
 import com.example.drawingapplication.room.DrawingDao
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.utils.EmptyContent.contentType
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.putJsonArray
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
 
 
 class Repository(
@@ -60,6 +49,10 @@ class Repository(
                             },
                             "features": [
                             {
+                            "type": "LABEL_DETECTION",
+                            "maxResults": 5
+                            },
+                            {
                              "type": "OBJECT_LOCALIZATION",
                              "maxResults": 10
                             }
@@ -75,7 +68,11 @@ class Repository(
 
         Log.e("response", response.toString())
         val obj = JsonToObject(response.toString())
-        val imageStatistics = createImageStats(obj)
+        val firstResponse = obj.responses.firstOrNull()
+        val labelAnnotations = firstResponse?.labelAnnotations ?: emptyList()
+        val localizedAnnotations = firstResponse?.localizedObjectAnnotations ?: emptyList()
+
+        val imageStatistics = ImageStats(labelAnnotations, localizedAnnotations)
         Log.e("imageStatsCheck", imageStatistics.toString())
 
         return imageStatistics
@@ -84,18 +81,6 @@ class Repository(
     fun JsonToObject(jsonString: String): VisionApiResponse {
         val json = Json { ignoreUnknownKeys = true }
         return json.decodeFromString(jsonString)
-    }
-
-    fun createImageStats(response: VisionApiResponse): ImageStats {
-        val items = mutableMapOf<String, Pair<Double, BoundingPoly>>()
-        if (response.responses[0].localizedObjectAnnotations != null) {
-            for (item in response.responses[0].localizedObjectAnnotations!!) {
-                items.put(item.name, Pair(item.score, item.boundingPoly))
-            }
-
-        }
-        val imageStats = ImageStats(items)
-        return imageStats
     }
 
     fun addDrawing(drawingPath: String) {
