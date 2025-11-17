@@ -115,11 +115,9 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 
-    private val isNewDrawingMutable = MutableStateFlow(true)
-    val isNewDrawingReadOnly: MutableStateFlow<Boolean> = isNewDrawingMutable
+    private val imageIdMutable = MutableStateFlow(0)
+    val imageIdReadOnly: MutableStateFlow<Int> = imageIdMutable
 
-    private val hasBeenSavedMutable = MutableStateFlow(false)
-    val hasBeenSavedReadOnly: MutableStateFlow<Boolean> = hasBeenSavedMutable
 
 
     //get the current drawing to be drawn
@@ -130,6 +128,24 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
             val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
             bitmapMutable.value = drawing
         }
+    }
+
+    suspend fun newDrawing(context: Context): Int {
+        val tempDrawing = DrawingEntity(
+            drawingPath = "",
+        )
+        val newId = dao.insertAndReturnId(tempDrawing).toInt()
+
+        val fileName = "drawing_${newId}.png"
+        val file = File(context.filesDir, fileName)
+
+        val newDrawing = DrawingEntity(
+            drawingPath = file.absolutePath,
+            id = newId
+        )
+        dao.insertDrawing(newDrawing)
+
+        return newDrawing.id
     }
 
     fun saveDrawing(drawing: ImageBitmap, id: Int, context: Context) {
@@ -146,9 +162,6 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
             drawingPath = file.absolutePath,
             id = id
         )
-
-        hasBeenSavedMutable.value = true
-
         dao.insertDrawing(newDrawing)
     }
 
@@ -188,8 +201,8 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         bitmapMutable.value = thisBitmap
     }
 
-    fun isNewDrawing(value: Boolean) {
-        isNewDrawingMutable.value = value
+    fun changeImageId(id: Int) {
+        imageIdMutable.value = id
     }
 
 
@@ -234,10 +247,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val strokeSize by myVM.currentSizeReadOnly.collectAsState()
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
     val newestBitmap by myVM.bitmapReadOnly.collectAsState()
-    val isNewDrawing by myVM.isNewDrawingReadOnly.collectAsState()
 
-    val hasBeenSaved by myVM.hasBeenSavedReadOnly.collectAsState()
-
+    val thisId by myVM.imageIdReadOnly.collectAsState()
 
     var sizePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
     var redPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
@@ -245,12 +256,10 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     var bluePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
     var alphaPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
 
-
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
 
     val picture = remember { Picture() }
-    myVM.isNewDrawing(newDrawing)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -258,6 +267,12 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     if(!newDrawing) {
         LaunchedEffect(drawingId) {
             myVM.updateCanvas(drawingId)
+            myVM.changeImageId(drawingId)
+        }
+    }
+    else{
+        LaunchedEffect(drawingId) {
+           myVM.changeImageId(myVM.newDrawing(navController.context))
         }
     }
 
@@ -272,7 +287,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
         Row{
             Button(
                 modifier = Modifier.testTag("SaveButton"),
-                onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)}) {
+                onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), thisId, navController.context)}) {
                 Text("Save")
             }
             Button(
@@ -285,12 +300,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             Button(
                 modifier = Modifier.testTag("BackButton"),
                 onClick = {
-                    if (!hasBeenSaved)
-                    {
-                        coroutineScope.launch {
-                            myVM.deleteDrawing(drawingId)
-                        }
-                    }
+                    myVM.saveDrawing(newestBitmap.asImageBitmap(), thisId, navController.context)
                     navController.navigate("main")})
             {
                 Text("Back to Main")
@@ -522,11 +532,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
                         )
                     }
                 }
-
-//                if(isNewDrawing) {
-//                    myVM.saveDrawing(newestBitmap.asImageBitmap(), drawingId, navController.context)
-//                    myVM.isNewDrawing(false)
-//                }
             }
         }
 

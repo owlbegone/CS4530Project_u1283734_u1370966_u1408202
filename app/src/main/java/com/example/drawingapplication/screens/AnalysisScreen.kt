@@ -217,9 +217,6 @@ fun AnalysisScreen(navController: NavHostController, drawingId: Int, myVM: Analy
         Button(
             modifier = Modifier.testTag("BackToMain") .padding(10.dp),
             onClick = {
-                coroutineScope.launch {
-                    myVM.deleteDrawing(drawingId)
-                }
                 navController.navigate("main")
             }
         )

@@ -57,24 +57,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val drawingReadOnly: Flow<List<DrawingEntity?>> = dao.allDrawings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    suspend fun newDrawing(context: Context): Int {
-        val tempDrawing = DrawingEntity(
-            drawingPath = "",
-        )
-        val newId = dao.insertAndReturnId(tempDrawing).toInt()
-
-        val fileName = "drawing_${newId}.png"
-        val file = File(context.filesDir, fileName)
-
-        val newDrawing = DrawingEntity(
-            drawingPath = file.absolutePath,
-            id = newId
-        )
-        dao.insertDrawing(newDrawing)
-
-        return newDrawing.id
-    }
-
 }
 
 @Composable
@@ -87,7 +69,6 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("this is the main screen")
         Spacer(Modifier.height(20.dp))
         // this should create a new canvas, not navigate to an existing one
 
@@ -95,11 +76,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         Button(
             modifier = Modifier.testTag("NewButton"),
             onClick = {
-            scope.launch{
-                val newDrawing = myVM.newDrawing(navController.context)
-                //val thisID = myVM.getHighestID()
-                navController.navigate("canvas/${newDrawing}?newDrawing=true?startingImg=")
-            }
+                navController.navigate("canvas/-1?newDrawing=true?startingImg=")
+
         }) {
             Text("New Drawing")
         }
@@ -107,10 +85,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         Button(
             modifier = Modifier.testTag("ImportButton"),
             onClick = {
-                scope.launch{
-                    val thisDrawing = myVM.newDrawing(navController.context)
-                    navController.navigate("analysis/${thisDrawing}")
-                }
+                    navController.navigate("analysis/-1")
         }
         )
         {
