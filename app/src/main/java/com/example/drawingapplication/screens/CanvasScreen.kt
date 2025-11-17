@@ -115,7 +115,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     // Variables for the current bitmap (stores all of the existing information about Canvas)
     private val bitmapMutable = MutableStateFlow(createBitmap(1,1).apply{
-        eraseColor(Color.White.toArgb())
+//        eraseColor(Color.White.toArgb())
     })
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 

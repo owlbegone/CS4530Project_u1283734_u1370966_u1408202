@@ -2,11 +2,8 @@ package com.example.drawingapplication.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val mintyGreen = Color(0xffa7d6b9)
+val darkGreen = Color(0xff00695C)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-val LightRed = Color (0xFFFFCDD2)
+val darkPurp = Color(0xff49374F)
+val lightPurp = Color(0xff866691)

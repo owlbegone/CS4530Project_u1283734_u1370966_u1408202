@@ -18,8 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.navigation.compose.rememberNavController
 import com.example.drawingapplication.Navigation.AppNavHost
@@ -30,11 +33,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            DrawingApplicationTheme {
-                val myNavControll = rememberNavController()
-                AppNavHost(myNavControll, "splash")
+            DrawingApplicationTheme(dynamicColor = false) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ){
+                    val myNavControll = rememberNavController()
+                    AppNavHost(myNavControll, "splash")
+                }
+
             }
         }
     }

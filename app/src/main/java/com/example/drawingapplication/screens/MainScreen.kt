@@ -70,7 +70,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
 
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        horizontalAlignment = Alignment.CenterHorizontally)
+        {
         Spacer(Modifier.height(40.dp))
         Row{
             Button(
@@ -112,7 +113,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                                     .testTag("SavedImage")
                                     .size(300.dp)
                                     .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
-                                    .background(Color.Transparent)
+                                    .background(Color.White)
                             )
                         } else {
                             Box(
