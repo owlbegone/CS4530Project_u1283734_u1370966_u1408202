@@ -22,9 +22,6 @@ interface DrawingDao {
     @Query("select * from Drawings order by id desc")
     fun getAllDrawings(): Flow<List<DrawingEntity>>
 
-    @Query("select * from Drawings order by id desc limit 1")
-    suspend fun getHighestID(): DrawingEntity?
-
     @Insert
     suspend fun insertDrawingAndReturnId(drawing: DrawingEntity): Long
 }

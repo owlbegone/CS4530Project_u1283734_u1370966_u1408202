@@ -49,11 +49,6 @@ class AnalysisViewModel(application: Application) : AndroidViewModel(application
     suspend fun analyzeDrawing(bitmap: Bitmap): ImageStats {
         val imageStats = dao.analyzeDrawing(bitmap)
         Log.e("In Analysis", imageStats.toString())
-//        for (item in imageStats.labels) {
-//            Log.e("Name Check", item.key)
-//            Log.e("Score Check", item.value.first.toString())
-//            Log.e("Location Check", item.value.second.toString())
-//        }
         return imageStats
     }
 

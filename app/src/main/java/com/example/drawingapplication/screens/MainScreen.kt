@@ -75,9 +75,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return newDrawing.id
     }
 
-    suspend fun getHighestID(): Int {
-        return dao.highestID() + 1
-    }
 }
 
 @Composable

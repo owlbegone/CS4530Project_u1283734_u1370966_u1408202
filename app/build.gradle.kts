@@ -55,6 +55,12 @@ android {
         resources.excludes.add("META-INF/DEPENDENCIES")
         resources.excludes.add("META-INF/INDEX.LIST")
     }
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDirs("src/androidTest/assets")
+        }
+    }
+
 }
 
 dependencies {
@@ -97,30 +103,10 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // Gemini helped with these dependencies
-
-    // 1. The official Google Cloud Vision client library for Java/Kotlin
-    implementation("com.google.cloud:google-cloud-vision:3.77.0")
-
-    // 2. The authentication library for using API Keys
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.40.0")
-
-    // 3. The Cloud Vision library requires gRPC and Protobuf for communication
-    implementation("io.grpc:grpc-okhttp:1.76.0")
-    implementation("io.grpc:grpc-stub:1.76.0")
-    implementation("io.grpc:grpc-protobuf-lite:1.76.0") {
-        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
-    }
-
-    // For converting Bitmaps to ByteString
-    implementation("com.google.protobuf:protobuf-java:4.33.1")
-
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio) // or use .android instead
     implementation(libs.ktor.client.android) // or use .android instead
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.kotlinx.serialization.json)
-
-
 }

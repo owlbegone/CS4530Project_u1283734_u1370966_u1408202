@@ -82,7 +82,7 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController, 1, true)
+            CanvasScreen(testingNavController, 1, true, "")
         }
 
         composeTestRule.onNodeWithText("Red: 4").assertIsDisplayed()
@@ -96,7 +96,7 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController, 1, true)
+            CanvasScreen(testingNavController, 1, true, "")
         }
 
         composeTestRule.onNodeWithText("Brush size: 4").assertIsDisplayed();
@@ -107,7 +107,7 @@ class InstrumentedTest {
         composeTestRule.setContent {
             val testingNavController = rememberNavController()
 
-            CanvasScreen(testingNavController, 1, true)
+            CanvasScreen(testingNavController, 1, true, "")
         }
 
         composeTestRule.onNodeWithText("Brush shape: Square").assertIsDisplayed();
