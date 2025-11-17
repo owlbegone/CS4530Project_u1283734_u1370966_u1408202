@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import android.app.AlertDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,8 +73,12 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally)
         {
-        Spacer(Modifier.height(40.dp))
-        Row{
+        Spacer(Modifier.height(60.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Absolute.Left
+            ){
+            Spacer(Modifier.width(10.dp))
             Button(
                 modifier = Modifier.testTag("NewButton"),
                 onClick = {
@@ -82,6 +87,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                 }) {
                 Text("New")
             }
+            Spacer(Modifier.width(140.dp))
             Button(
                 modifier = Modifier.testTag("ImportButton"),
                 onClick = {
@@ -92,8 +98,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                 Text("Import")
             }
         }
-
-
+            Spacer(Modifier.height(20.dp))
         Row {
             LazyColumn(
                 modifier = Modifier
