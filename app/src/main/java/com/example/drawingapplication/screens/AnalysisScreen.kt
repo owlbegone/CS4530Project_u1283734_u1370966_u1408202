@@ -56,6 +56,10 @@ class AnalysisViewModel(application: Application) : AndroidViewModel(application
 //        }
         return imageStats
     }
+
+    suspend fun deleteDrawing(drawingID: Int) {
+        dao.delDrawing(drawingID)
+    }
 }
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -197,8 +201,8 @@ fun AnalysisScreen(navController: NavHostController, drawingId: Int, myVM: Analy
                     Row {
                         if (!labelsUsed.contains(label.description))
                         {
-                            Text(color = Color.Red, text = label.description + ": ")
-                            Text(color = Color.Red, text = label.score.toString())
+                            Text(color = Color.Magenta, text = label.description + ": ")
+                            Text(color = Color.Magenta, text = label.score.toString())
                         }
                     }
                 }
@@ -214,9 +218,17 @@ fun AnalysisScreen(navController: NavHostController, drawingId: Int, myVM: Analy
                 }) {
                 Text("Start Drawing!")
             }
-
-
         }
+        Button(
+            modifier = Modifier.testTag("BackToMain") .padding(10.dp),
+            onClick = {
+                coroutineScope.launch {
+                    myVM.deleteDrawing(drawingId)
+                }
+                navController.navigate("main")
+            }
+        )
+        {Text("Back")}
 
     }
 

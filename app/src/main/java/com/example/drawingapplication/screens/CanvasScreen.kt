@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -117,6 +118,9 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     private val isNewDrawingMutable = MutableStateFlow(true)
     val isNewDrawingReadOnly: MutableStateFlow<Boolean> = isNewDrawingMutable
 
+    private val hasBeenSavedMutable = MutableStateFlow(false)
+    val hasBeenSavedReadOnly: MutableStateFlow<Boolean> = hasBeenSavedMutable
+
 
     //get the current drawing to be drawn
     suspend fun updateCanvas(drawingId: Int) {
@@ -142,6 +146,8 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
             drawingPath = file.absolutePath,
             id = id
         )
+
+        hasBeenSavedMutable.value = true
 
         dao.insertDrawing(newDrawing)
     }
@@ -211,6 +217,10 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         context.startActivity(Intent.createChooser(shareIntent, "Share via"))
     }
 
+    suspend fun deleteDrawing(drawingID: Int) {
+        dao.delDrawing(drawingID)
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -226,6 +236,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val newestBitmap by myVM.bitmapReadOnly.collectAsState()
     val isNewDrawing by myVM.isNewDrawingReadOnly.collectAsState()
 
+    val hasBeenSaved by myVM.hasBeenSavedReadOnly.collectAsState()
+
 
     var sizePosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
     var redPosition by remember { mutableFloatStateOf(strokeSize.toFloat()) }
@@ -239,6 +251,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
 
     val picture = remember { Picture() }
     myVM.isNewDrawing(newDrawing)
+
+    val coroutineScope = rememberCoroutineScope()
 
     //if it's not a new drawing, update the canvas with the old bitmap from the directory
     if(!newDrawing) {
@@ -270,7 +284,14 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             }
             Button(
                 modifier = Modifier.testTag("BackButton"),
-                onClick = {navController.navigate("main")})
+                onClick = {
+                    if (!hasBeenSaved)
+                    {
+                        coroutineScope.launch {
+                            myVM.deleteDrawing(drawingId)
+                        }
+                    }
+                    navController.navigate("main")})
             {
                 Text("Back to Main")
             }

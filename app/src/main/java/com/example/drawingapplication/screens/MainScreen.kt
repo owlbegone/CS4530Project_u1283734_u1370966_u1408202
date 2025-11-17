@@ -74,6 +74,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         return newDrawing.id
     }
+
+    suspend fun getHighestID(): Int {
+        return dao.highestID() + 1
+    }
 }
 
 @Composable
@@ -96,6 +100,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
             onClick = {
             scope.launch{
                 val newDrawing = myVM.newDrawing(navController.context)
+                //val thisID = myVM.getHighestID()
                 navController.navigate("canvas/${newDrawing}?newDrawing=true?startingImg=")
             }
         }) {
@@ -106,8 +111,8 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
             modifier = Modifier.testTag("ImportButton"),
             onClick = {
                 scope.launch{
-                    val newDrawing = myVM.newDrawing(navController.context)
-                    navController.navigate("analysis/${newDrawing}")
+                    val thisDrawing = myVM.newDrawing(navController.context)
+                    navController.navigate("analysis/${thisDrawing}")
                 }
         }
         )

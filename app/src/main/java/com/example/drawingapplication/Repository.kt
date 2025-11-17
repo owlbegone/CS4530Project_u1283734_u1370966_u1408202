@@ -115,4 +115,9 @@ class Repository(
     suspend fun insertAndReturnId(drawing: DrawingEntity): Long {
         return dao.insertDrawingAndReturnId(drawing)
     }
+
+    suspend fun highestID(): Int {
+        val highestID = dao.getHighestID()
+        return highestID?.id ?: 0
+    }
 }
