@@ -12,11 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = lightPurp,
-    onPrimary = Color.White,
+    primary = lightPurp, //this is what things like buttons use
+    onPrimary = Color.White, //this is the text on top of buttons
 
     background = darkPurp,
-    onBackground = Color.White,
+    onBackground = Color.White, //this is text that sits on the background directly (like on our splash screen)
 )
 
 private val LightColorScheme = lightColorScheme(
