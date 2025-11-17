@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.DpSize
@@ -113,7 +114,9 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     val currentShapeReadOnly: MutableStateFlow<String> = currentShapeMutable
 
     // Variables for the current bitmap (stores all of the existing information about Canvas)
-    private val bitmapMutable = MutableStateFlow(createBitmap(1,1))
+    private val bitmapMutable = MutableStateFlow(createBitmap(1,1).apply{
+        eraseColor(Color.White.toArgb())
+    })
     val bitmapReadOnly: MutableStateFlow<Bitmap> = bitmapMutable
 
     private val imageIdMutable = MutableStateFlow(0)
