@@ -83,6 +83,7 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import androidx.core.graphics.scale
 
 class CanvasViewModel(application: Application) : AndroidViewModel(application) {
     // Variables for the lists containing all the strokes on the canvas
@@ -247,6 +248,7 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
     val strokeSize by myVM.currentSizeReadOnly.collectAsState()
     val strokeShape by myVM.currentShapeReadOnly.collectAsState()
     val newestBitmap by myVM.bitmapReadOnly.collectAsState()
+    val hasDrawnStartingImg = remember { mutableStateOf(false) }
 
     val thisId by myVM.imageIdReadOnly.collectAsState()
 
@@ -270,11 +272,8 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             myVM.changeImageId(drawingId)
         }
     }
-    else{
-        LaunchedEffect(drawingId) {
-           myVM.changeImageId(myVM.newDrawing(navController.context))
-        }
-    }
+
+
 
     Column(modifier = Modifier
         .padding(15.dp)
@@ -287,7 +286,24 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
         Row{
             Button(
                 modifier = Modifier.testTag("SaveButton"),
-                onClick = { myVM.saveDrawing(newestBitmap.asImageBitmap(), thisId, navController.context)}) {
+                onClick = {
+                    coroutineScope.launch {
+                        if (newDrawing) {
+                            myVM.changeImageId(myVM.newDrawing(navController.context))
+                            myVM.saveDrawing(
+                                newestBitmap.asImageBitmap(),
+                                myVM.imageIdReadOnly.value,
+                                navController.context
+                            )
+                        }
+                        else{
+                        myVM.saveDrawing(
+                            newestBitmap.asImageBitmap(),
+                            thisId,
+                            navController.context
+                        )}
+                    }
+                }) {
                 Text("Save")
             }
             Button(
@@ -300,7 +316,6 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
             Button(
                 modifier = Modifier.testTag("BackButton"),
                 onClick = {
-                    myVM.saveDrawing(newestBitmap.asImageBitmap(), thisId, navController.context)
                     navController.navigate("main")})
             {
                 Text("Back to Main")
@@ -493,15 +508,17 @@ fun CanvasScreen(navController: NavHostController, drawingId: Int, newDrawing: B
 
             ) {
                 //draw imported image, if it exists
-                if(startingImg != "") {
+                if(startingImg != "" && !hasDrawnStartingImg.value) {
                     val uri = startingImg.toUri()
                     try {
                         val inputStream =
                             uri.let { navController.context.contentResolver.openInputStream(it) }
                         val drawing = BitmapFactory.decodeStream(inputStream)
-                        val importedBitmap = drawing.asImageBitmap()
                         inputStream?.close()
-                        this.drawImage(importedBitmap, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+
+                        val scaled = drawing.scale(this.size.width.toInt(), this.size.height.toInt(), false)
+                        myVM.updateBitmap(scaled)
+                        hasDrawnStartingImg.value = true
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

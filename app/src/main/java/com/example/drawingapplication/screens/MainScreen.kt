@@ -69,28 +69,27 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(20.dp))
-        // this should create a new canvas, not navigate to an existing one
+        Spacer(Modifier.height(40.dp))
+        Row{
+            Button(
+                modifier = Modifier.testTag("NewButton"),
+                onClick = {
+                    navController.navigate("canvas/-1?newDrawing=true?startingImg=")
 
-//        Button(onClick = {navController.navigate("canvas/${drawing.id}")}) {
-        Button(
-            modifier = Modifier.testTag("NewButton"),
-            onClick = {
-                navController.navigate("canvas/-1?newDrawing=true?startingImg=")
-
-        }) {
-            Text("New Drawing")
-        }
-
-        Button(
-            modifier = Modifier.testTag("ImportButton"),
-            onClick = {
+                }) {
+                Text("New")
+            }
+            Button(
+                modifier = Modifier.testTag("ImportButton"),
+                onClick = {
                     navController.navigate("analysis/-1")
+                }
+            )
+            {
+                Text("Import")
+            }
         }
-        )
-        {
-            Text("Import Photo")
-        }
+
 
         Row {
             LazyColumn(
@@ -109,7 +108,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                             modifier = Modifier
                                 .testTag("SavedImage")
                                 .size(300.dp)
-                                .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false") }
+                                .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
                                 .background(Color.Transparent)
                         )
                     } else {
@@ -117,7 +116,7 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                             modifier = Modifier
                                 .size(300.dp)
                                 .background(Color.Gray)
-                                .clickable { navController.navigate("canvas/${drawingEntity?.id}") }
+                                .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
                         )
                     }
 
