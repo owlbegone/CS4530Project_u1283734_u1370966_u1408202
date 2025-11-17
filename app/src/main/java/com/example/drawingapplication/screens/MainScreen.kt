@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import android.app.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
@@ -63,7 +65,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
     val drawingList by myVM.drawingReadOnly.collectAsState(emptyList())
-
+    val context = LocalContext.current
     //val source = ImageDecoder.createSource(ContentResolver.SCHEME_ANDROID_RESOURCE, imageURI)
 
     Column (modifier = Modifier.fillMaxSize(),
@@ -99,28 +101,49 @@ fun MainScreen(navController: NavHostController, myVM: MainViewModel = viewModel
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(drawingList) { drawingEntity ->
-                    val drawingFile = File(drawingEntity?.drawingPath)
-                    val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
-                    if (drawing != null) {
-                        Image(
-                            bitmap = drawing.asImageBitmap(),
-                            contentDescription = "Drawing ${drawingEntity?.id}",
-                            modifier = Modifier
-                                .testTag("SavedImage")
-                                .size(300.dp)
-                                .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
-                                .background(Color.Transparent)
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        val drawingFile = File(drawingEntity?.drawingPath)
+                        val drawing = BitmapFactory.decodeFile(drawingFile.absolutePath)
+                        if (drawing != null) {
+                            Image(
+                                bitmap = drawing.asImageBitmap(),
+                                contentDescription = "Drawing ${drawingEntity?.id}",
+                                modifier = Modifier
+                                    .testTag("SavedImage")
+                                    .size(300.dp)
+                                    .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
+                                    .background(Color.Transparent)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(300.dp)
+                                    .background(Color.Gray)
+                                    .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                AlertDialog.Builder(context)
+                                    .setTitle("Delete Drawing")
+                                    .setMessage("Are you sure you want to delete this drawing?")
+                                    .setPositiveButton("Yes") { _, _ ->
+                                        scope.launch {
+                                            myVM.dao.delDrawing(drawingEntity?.id ?: return@launch)
+                                        }
+                                    }
+                                    .setNegativeButton("No", null)
+                                    .show()
+
+                            }
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(300.dp)
-                                .background(Color.Gray)
-                                .clickable { navController.navigate("canvas/${drawingEntity?.id}?newDrawing=false?startingImg=") }
-                        )
+                        {
+                            Text("X")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
